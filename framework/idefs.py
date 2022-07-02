@@ -30,16 +30,12 @@ class ICellularAutomata(ABC, Layer):
         Hence the implementation is left to the derived class 
 
 
-
-
     Methods
     -------
     add_child_ca( self, ca)
         Adds a 'ca' object as a child to the current cellular automata object
     remove_child_ca( self )
         Removes link of the current CA with its child
-    initialize(self, cell_states)
-        Initializes the cellular automata cells.
     process_signal(self, signal, parent_cell_id ):
         updates the signal channels of the cell with value parent_cell_id with 'signal' parameter.  
     update_ca(self, make_recursive=False )  

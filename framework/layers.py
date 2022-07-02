@@ -5,7 +5,7 @@ from  keras.layers import Conv2D, Dense, Flatten, Input
 import numpy as np
 
 """
-    This is a derived class to create a leaf CA that learns rules to create an input image 
+    This is a derived class to create a leaf CA that learns rules to create a target image 
     
     Attributes
     ----------
