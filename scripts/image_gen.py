@@ -143,8 +143,8 @@ if __name__ == '__main__':
     image_height= int(args.image_height) if args.image_height else 224
     num_circles= int( args.num_circles) if args.num_circles else 10
     num_colors= int(args.num_colors) if args.num_colors else 2
-    min_radius= (args.min_radius) if args.min_radius else 5
-    max_radius= (args.max_radius) if args.max_radius else 10
+    min_radius= int(args.min_radius) if args.min_radius else 5
+    max_radius= int(args.max_radius) if args.max_radius else 10
     save_image= True if args.save_image == "y" else False
 
     create_image(image_width,image_height,num_circles,num_colors,min_radius,max_radius,save_image)
