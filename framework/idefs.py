@@ -48,8 +48,8 @@ class ICellularAutomata(ABC, Layer):
         self._parent =  None
         self._child  = None
         self._level = 0
-        self._cell_states = None
-        self._parent_ca_cell_ids = None
+        #self._cell_states = None
+        #self._parent_ca_cell_ids = None
         
  
     @property    
@@ -69,24 +69,24 @@ class ICellularAutomata(ABC, Layer):
     def level(self):
         return self._level
 
-    @property
-    def cell_states(self):
-        return self._cell_states
+    # @property
+    # def cell_states(self):
+    #     return self._cell_states
 
     
-    @abstractmethod
-    @cell_states.setter
-    def cell_states( self, states):
-        pass
+    # @abstractmethod
+    # @cell_states.setter
+    # def cell_states( self, states):
+    #     pass
 
-    @property
-    def parent_ca_cell_ids(self):
-        return self._parent_ca_cell_ids   
+    # @property
+    # def parent_ca_cell_ids(self):
+    #     return self._parent_ca_cell_ids   
 
-    @abstractmethod
-    @parent_ca_cell_ids.setter
-    def parent_ca_cell_ids( self, ids):
-        pass
+    # @abstractmethod
+    # @parent_ca_cell_ids.setter
+    # def parent_ca_cell_ids( self, ids):
+    #     pass
 
     def add_child_ca( self, ca):
         
@@ -107,11 +107,11 @@ class ICellularAutomata(ABC, Layer):
             # removing the child deletes the complete object hierarchy
             # below it. This is done for simplicity and can be enhanced in future 
             
-    @abstractmethod
+   # @abstractmethod
     def process_signal(self, signal, parent_cell_id ):
         pass
 
-    @abstractmethod
+    # @abstractmethod
     def update_ca(self, make_recursive=False ):
         # Update self._cell_states
         # Update the self._child._parent_ca_cell_ids of the child CAs

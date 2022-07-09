@@ -20,9 +20,7 @@ class HNCAModel(Model):
         super(HNCAModel,self).__init__()
         img = load_image( image_path )
         self.ca_leaf = LeafImgCA( img )
-        self.ca_level1 = HCA()
-        self.ca_level1.add_child_ca(self.ca_leaf)
-
+        
     def call(self ):
         pass
         
