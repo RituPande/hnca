@@ -39,8 +39,11 @@ class LeafImgCA(ICellularAutomata):
         if not hasattr(LeafImgCA, "n_schannels"):
             LeafImgCA.n_schannels = 8 # exact channel count TBD
 
+        if not hasattr(LeafImgCA, "perception_kernel"):
+            LeafImgCA.perception_kernel = LeafImgCA.getPerceptionKernel()
+
     @staticmethod
-    def getPerceptionKernel():
+    def _getPerceptionKernel():
       ident = tf.constant([[0.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,0.0]])
       sobel_x = tf.constant([[-1.0,0.0,1.0],[-2.0,0.0,2.0],[-1.0,0.0,1.0]])
       sobel_y = tf.constant([[-1.0,-2.0,-1.0],[0.0,0.0,0.0],[1.0,2.0,1.0]])
@@ -50,7 +53,6 @@ class LeafImgCA(ICellularAutomata):
 
     def call( self, x, training=None ):
 
-        orig_shape = x.shape 
         x = self.perception(x)
         x = self.features(x)
         x= self.new_state(x)
