@@ -18,6 +18,18 @@ import numpy as np
 
 class LeafImgCA(ICellularAutomata):
 
+    class DepthwiseInitializer(tf.keras.initializers.Initializer):
+
+        def __init__(self, mean, stddev):
+          ident = tf.constant([[0.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,0.0]])
+          sobel_x = tf.constant([[-1.0,0.0,1.0],[-2.0,0.0,2.0],[-1.0,0.0,1.0]])
+          sobel_y = tf.constant([[-1.0,-2.0,-1.0],[0.0,0.0,0.0],[1.0,2.0,1.0]])
+          lap = tf.constant([[1.0,2.0,1.0],[2.0,-12,2.0],[1.0,2.0,1.0]])
+          self.kernel = tf.stack([ ident, sobel_x, sobel_y, lap ])
+
+        def __call__(self, shape, dtype=None, **kwargs):
+          return self.kernel
+
     def __init__(self ):
         super().__init__()
 
@@ -26,7 +38,9 @@ class LeafImgCA(ICellularAutomata):
         kernel_size=(3,3),\
           padding='same',\
             depth_multiplier=3,\
-              depthwise_initializer=LeafImgCA.getPerceptionKernel() )
+              depthwise_initializer=LeafImgCA.DepthwiseInitializer()  )
+
+        self.perception.trainable = False
 
         self.features = Conv2D(\
         filters=128,\
@@ -48,18 +62,7 @@ class LeafImgCA(ICellularAutomata):
         if not hasattr(LeafImgCA, "n_schannels"):
             LeafImgCA.n_schannels = 8 # exact channel count TBD
 
-        if not hasattr(LeafImgCA, "perception_kernel"):
-            LeafImgCA.perception_kernel = LeafImgCA.getPerceptionKernel()
-
-    @staticmethod
-    def _getPerceptionKernel():
-      ident = tf.constant([[0.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,0.0]])
-      sobel_x = tf.constant([[-1.0,0.0,1.0],[-2.0,0.0,2.0],[-1.0,0.0,1.0]])
-      sobel_y = tf.constant([[-1.0,-2.0,-1.0],[0.0,0.0,0.0],[1.0,2.0,1.0]])
-      lap = tf.constant([[1.0,2.0,1.0],[2.0,-12,2.0],[1.0,2.0,1.0]])
-      kernel = tf.stack([ ident, sobel_x, sobel_y, lap ])
-      return kernel
-
+        
     def call( self, x, training=None ):
 
         x = self.perception(x)
