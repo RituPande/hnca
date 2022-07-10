@@ -22,13 +22,22 @@ class LeafImgCA(ICellularAutomata):
         super().__init__()
 
         LeafImgCA._init_static_vars()
-        self.perception = DepthwiseConv2D(kernel_size=(3,3),\
-         padding='same',\
-         depth_multiplier=3,\
-         depthwise_initializer=LeafImgCA.getPerceptionKernel() )
+        self.perception = DepthwiseConv2D(\
+        kernel_size=(3,3),\
+          padding='same',\
+            depth_multiplier=3,\
+              depthwise_initializer=LeafImgCA.getPerceptionKernel() )
 
-        self.features = Conv2D(filters=128, kernel_size=1, padding='same') 
-        self.new_state = Conv2D(filters=16, kernel_size=1, padding='same')
+        self.features = Conv2D(\
+        filters=128,\
+         kernel_size=1,\
+          padding='same',\
+           activation='relu')
+
+        self.new_state = Conv2D(\
+        filters=LeafImgCA.n_channels,\
+         kernel_size=1,\
+          padding='same')
 
    
     @staticmethod
