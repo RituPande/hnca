@@ -22,25 +22,36 @@ class LeafImgCA(ICellularAutomata):
         super().__init__()
 
         LeafImgCA._init_static_vars()
-        self.perception = DepthwiseConv2D(kernel_size=3,padding='same',depth_multiplier=3)
+        self.perception = DepthwiseConv2D(kernel_size=(3,3),\
+         padding='same',\
+         depth_multiplier=3,\
+         depthwise_initializer=LeafImgCA.getPerceptionKernel() )
+
         self.features = Conv2D(filters=128, kernel_size=1, padding='same') 
         self.new_state = Conv2D(filters=16, kernel_size=1, padding='same')
 
    
     @staticmethod
     def _init_static_vars():
-        if not hasattr(LeafImgCA, "c_channels"):
-            LeafImgCA.c_channels = 16 # exact channel count TBD
+        if not hasattr(LeafImgCA, "n_channels"):
+            LeafImgCA.n_channels = 16 # exact channel count TBD
 
-        if not hasattr(LeafImgCA, "c_schannels"):
-            LeafImgCA.c_channels = 8 # exact channel count TBD
+        if not hasattr(LeafImgCA, "n_schannels"):
+            LeafImgCA.n_schannels = 8 # exact channel count TBD
 
-   
+    @staticmethod
+    def getPerceptionKernel():
+      ident = tf.constant([[0.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,0.0]])
+      sobel_x = tf.constant([[-1.0,0.0,1.0],[-2.0,0.0,2.0],[-1.0,0.0,1.0]])
+      sobel_y = tf.constant([[-1.0,-2.0,-1.0],[0.0,0.0,0.0],[1.0,2.0,1.0]])
+      lap = tf.constant([[1.0,2.0,1.0],[2.0,-12,2.0],[1.0,2.0,1.0]])
+      kernel = tf.stack([ ident, sobel_x, sobel_y, lap ])
+      return kernel
+
     def call( self, x, training=None ):
 
         orig_shape = x.shape 
         x = self.perception(x)
-        x = Reshape(orig_shape)(x)
         x = self.features(x)
         x= self.new_state(x)
         
