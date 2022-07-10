@@ -43,6 +43,7 @@ class ICellularAutomata(ABC, Layer):
         If make_recursive parameter is set to True,
         the parent CAs are also updated after the current CA is updated.  
     """
+    @abstractmethod
     def __init__(self):
         
         self._parent =  None
@@ -74,20 +75,6 @@ class ICellularAutomata(ABC, Layer):
         return self._cell_states
 
     
-    @abstractmethod
-    @cell_states.setter
-    def cell_states( self, states):
-        pass
-
-    @property
-    def parent_ca_cell_ids(self):
-        return self._parent_ca_cell_ids   
-
-    @abstractmethod
-    @parent_ca_cell_ids.setter
-    def parent_ca_cell_ids( self, ids):
-        pass
-
     def add_child_ca( self, ca):
         
         ca.parent = self
@@ -107,11 +94,11 @@ class ICellularAutomata(ABC, Layer):
             # removing the child deletes the complete object hierarchy
             # below it. This is done for simplicity and can be enhanced in future 
             
-    @abstractmethod
+    #@abstractmethod
     def process_signal(self, signal, parent_cell_id ):
         pass
 
-    @abstractmethod
+    #@abstractmethod
     def update_ca(self, make_recursive=False ):
         # Update self._cell_states
         # Update the self._child._parent_ca_cell_ids of the child CAs

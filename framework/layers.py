@@ -1,6 +1,7 @@
 from hnca.framework.idefs import ICellularAutomata
+import tensorflow as tf
 from tensorflow import keras
-from  keras.layers import Conv2D, Dense, Flatten, Input
+from  keras.layers import Conv2D, DepthwiseConv2D, Reshape
 
 import numpy as np
 
@@ -17,41 +18,34 @@ import numpy as np
 
 class LeafImgCA(ICellularAutomata):
 
-    def __init__(self, img ):
-        super().__init__(self)
+    def __init__(self ):
+        super().__init__()
 
         LeafImgCA._init_static_vars()
+        self.perception = DepthwiseConv2D(kernel_size=3,padding='same',depth_multiplier=3)
+        self.features = Conv2D(filters=128, kernel_size=1, padding='same') 
+        self.new_state = Conv2D(filters=16, kernel_size=1, padding='same')
 
-        # TODO: 
-        # 1. Create conv2d, flatten and dense layers to create perception vector
-        # 2. Update self._cell_states
-        
+   
     @staticmethod
     def _init_static_vars():
         if not hasattr(LeafImgCA, "c_channels"):
-            LeafImgCA.c_channels = 10 # exact channel count TBD
-        if not hasattr(LeafImgCA, "c_filters"):
-                LeafImgCA.Perception.c_filters = 3
-        if not hasattr(LeafImgCA, "c_filter_size"):
-                LeafImgCA.c_filter_size = 3
+            LeafImgCA.c_channels = 16 # exact channel count TBD
 
-    
-    def cell_states( self, states ):
-        pass
+        if not hasattr(LeafImgCA, "c_schannels"):
+            LeafImgCA.c_channels = 8 # exact channel count TBD
 
-    def parent(self,p ):
-        self._parent = p
-        #TODO
-        # Add Empty signal channels equal to the level of parent to _cell_states
-    
-    
-    def call( self, training=None ):
-        # Note: Input image is provided in the constructor and not as part of call method
-        # TODO
-        pass 
+   
+    def call( self, x, training=None ):
 
+        orig_shape = x.shape 
+        x = self.perception(x)
+        x = Reshape(orig_shape)(x)
+        x = self.features(x)
+        x= self.new_state(x)
         
-    def alive_masking(self):
+  
+    def alive_masking(self, x):
         pass
                 
     #TODO
@@ -76,13 +70,7 @@ class LeafPreconfCA(ICellularAutomata):
     def call( self, training=None ):
         pass
 
-    def cell_states( self, states ):
-        pass
-
-    def parent(self,p ):
-        self._parent = p
-        #TODO
-        # Add Empty signal channels equal to the level of parent to _cell_states
+   
     #TODO
     #Implement the abstract methods of the base class
 
@@ -108,14 +96,7 @@ class HCA(ICellularAutomata):
         # TODO
         pass
 
-    def cell_states( self, states ):
-        pass
-
-    def parent(self,p ):
-        self._parent = p
-        #TODO
-        # Add Empty signal channels equal to the level of parent to _cell_states
-
+    
     #TODO
     #Implement the abstract methods of the base class
 
