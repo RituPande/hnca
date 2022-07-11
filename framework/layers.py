@@ -2,6 +2,7 @@ from hnca.framework.idefs import ICellularAutomata
 import tensorflow as tf
 from tensorflow import keras
 from  keras.layers import Conv2D, DepthwiseConv2D, Reshape
+from keras.applications.vgg16 import VGG16
 
 import numpy as np
 
@@ -72,6 +73,36 @@ class LeafImgCA(ICellularAutomata):
   
     def alive_masking(self, x):
         pass
+    
+    @staticmethod
+    def calc_styles_vgg(img):
+      vgg16 =VGG16()
+      style_layers = [1, 6, 11, 18, 25]  
+      mean = tf.constant([0.485, 0.456, 0.406])[:,None,None]
+      std = tf.constant([0.229, 0.224, 0.225])[:,None,None]
+      x = (img-mean) / std
+      b, h, w,c = x.shape
+      features = [x.reshape(b, h*w, c)]
+      for i, layer in enumerate(vgg16[:max(style_layers)+1]):
+        x = layer(x)
+        if i in style_layers:
+          b, h, w,c = x.shape
+          features.append(x.reshape(b,h*w,c))
+      return features
+
+    @staticmethod
+    def gram_loss( x, y):
+      pass
+
+    @staticmethod
+    def create_vgg_loss(target_img):
+      target_style = LeafImgCA.calc_styles_vgg(target_img)
+      def loss_f(img):
+        img_style = LeafImgCA.calc_styles_vgg(img)
+        sum(LeafImgCA.gram_loss(x, y) for x, y in zip(target_style, img_style))
+
+      return loss_f
+
                 
     #TODO
     #Implement the abstract methods of the base class

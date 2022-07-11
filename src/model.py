@@ -32,6 +32,7 @@ class HNCAModel(Model):
     def predict( self ):
         pass
     
+
     
 
     
