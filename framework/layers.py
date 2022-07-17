@@ -67,7 +67,7 @@ class LeafImgCA(Layer, ICellularAutomata):
 
   
     def call( self, x, training=None ):
-        print("call enter")
+        
         y = self.perception(x)
         y = self.features(y)
         y = self.new_state(y) + x 
@@ -97,7 +97,8 @@ class LeafImgCA(Layer, ICellularAutomata):
         s = (img.shape[1:]) # remove batch dimension of input image shape
         vgg16 = VGG16(weights="imagenet", include_top=False, input_shape=s )
         vgg16.trainable = False ## Not trainable weights
-        style_layers = [1, 6, 11]  
+        vgg16.summary()
+        style_layers = [1, 4, 7,  11, 15]  
                 
         b, h, w, c  = x.shape
         features = [tf.reshape(x, (b, h*w, c) )]

@@ -9,7 +9,7 @@ def load_image( image_path, max_size = 224):
   img = np.float32(img)/255.0
   # premultiply RGB by Alpha
   img[..., :3] *= img[..., 3:]
-  return img[None,...]
+  return img[...,:3]
 
 def show_image( img ):
   img = PIL.Image.fromarray(np.uint8(img*255.0), 'RGB' ) 
