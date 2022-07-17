@@ -51,7 +51,7 @@ class LeafImgCA(Layer, ICellularAutomata):
 
         self.features =  Conv2D(filters=LeafImgCA.n_features, kernel_size=1, padding='same') 
         self.new_state = Conv2D(filters=LeafImgCA.n_channels, kernel_size=1, padding='same')
-        print("Constructor ended")
+       
 
    
     @staticmethod
@@ -85,7 +85,6 @@ class LeafImgCA(Layer, ICellularAutomata):
     def _calc_styles_vgg(img):
         x = preprocess_input(img)
 
-        print("x.shape=",x.shape)
         #mean = tf.constant([0.485, 0.456, 0.406])[None,None,:]
         #std = tf.constant([0.229, 0.224, 0.225])[None,None,:]
         #x = (x-mean) / std
@@ -97,7 +96,7 @@ class LeafImgCA(Layer, ICellularAutomata):
         s = (img.shape[1:]) # remove batch dimension of input image shape
         vgg16 = VGG16(weights="imagenet", include_top=False, input_shape=s )
         vgg16.trainable = False ## Not trainable weights
-        vgg16.summary()
+        
         style_layers = [1, 4, 7,  11, 15]  
                 
         b, h, w, c  = x.shape
@@ -114,6 +113,8 @@ class LeafImgCA(Layer, ICellularAutomata):
 
     @staticmethod
     def _gram_loss(y_true,y_pred):
+        print("y_true=",y_true)
+        print("y_pred=", y_pred)
         y_true = tf.squeeze(y_true)
         y_pred = tf.squeeze(y_pred)
 
@@ -121,10 +122,8 @@ class LeafImgCA(Layer, ICellularAutomata):
         G_pred = tf.matmul(tf.transpose(y_pred),y_pred)
 
         loss = tf.reduce_mean(tf.square(G_true - G_pred))
-
         print("loss=",loss)
         loss =  tf.cast(loss, dtype=tf.float32)
-        print("tf.loss=",loss)
         return loss
 
     @staticmethod
