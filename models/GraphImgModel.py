@@ -26,7 +26,7 @@ class GraphImgModel(Model):
         self.ca_leaf = LeafImgCA( )
         self.num_steps = num_steps
         self.target_size = 224
-        self.target_img = load_image(leaf_ca_target)[...,:3]
+        self.target_img = load_image(leaf_ca_target)[None,...]
         
 
         
@@ -47,7 +47,7 @@ class GraphImgModel(Model):
         optimizer.apply_gradients(zip(grads, variables))
         return loss
 
-    def train( self, lr=0.01, num_epochs= 1 ):
+    def train( self, lr=0.01, num_epochs= 2 ):
 
         loss_fn = LeafImgCA.create_vgg_loss_fn(self.target_img)
         optimizer = tf.keras.optimizers.Adam(lr)
