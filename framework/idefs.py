@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from keras.layers import Layer
 
 
-class ICellularAutomata(ABC, Layer):
+class ICellularAutomata(ABC):
 
     """
     An abstract base class providing template to create a cellular automata. 
