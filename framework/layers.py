@@ -106,8 +106,7 @@ class LeafImgCA(Layer, ICellularAutomata):
 
     @staticmethod
     def _gram_loss(y_true,y_pred):
-        print("y_true=",y_true)
-        print("y_pred=", y_pred)
+        
         y_true = tf.squeeze(y_true)
         y_pred = tf.squeeze(y_pred)
 
@@ -115,7 +114,6 @@ class LeafImgCA(Layer, ICellularAutomata):
         G_pred = tf.matmul(tf.transpose(y_pred),y_pred)
 
         loss = tf.reduce_mean(tf.square(G_true - G_pred))
-        print("loss=",loss)
         loss =  tf.cast(loss, dtype=tf.float32)
         return loss
 
