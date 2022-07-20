@@ -32,7 +32,7 @@ class LeafImgCA(Layer, ICellularAutomata):
             lap = tf.constant([[1.0,2.0,1.0],[2.0,-12,2.0],[1.0,2.0,1.0]])
 
             kernel = tf.stack([ident, sobel_x, sobel_y, lap], axis=-1)[:,:,None,:]
-            kernel = tf.repeat(kernel, LeafImgCA.n_channels, 2)
+            kernel = tf.repeat(kernel, LeafImgCA.n_channels, axis=2)
             return kernel
 
     def __init__(self ):
@@ -49,8 +49,8 @@ class LeafImgCA(Layer, ICellularAutomata):
 
         self.perception.trainable = False
 
-        self.features =  Conv2D(filters=LeafImgCA.n_features, kernel_size=1, padding='same') 
-        self.new_state = Conv2D(filters=LeafImgCA.n_channels, kernel_size=1, padding='same')
+        self.features =  Conv2D(filters=LeafImgCA.n_features, kernel_size=1, padding='same', activation = 'relu') 
+        self.new_state = Conv2D(filters=LeafImgCA.n_channels, kernel_size=1, padding='same', activation='sigmoid')
        
 
    
@@ -70,7 +70,9 @@ class LeafImgCA(Layer, ICellularAutomata):
         
         y = self.perception(x)
         y = self.features(y)
-        y = self.new_state(y) + x 
+        y = self.new_state(y)
+        y = y*255.0 + x
+        y = tf.clip_by_value( y, 0.0, 255.0 ) 
         return y
         
     @staticmethod
@@ -84,15 +86,6 @@ class LeafImgCA(Layer, ICellularAutomata):
     @staticmethod
     def _calc_styles_vgg(img):
         x = preprocess_input(img)
-
-        #mean = tf.constant([0.485, 0.456, 0.406])[None,None,:]
-        #std = tf.constant([0.229, 0.224, 0.225])[None,None,:]
-        #x = (x-mean) / std
-
-        mean = tf.math.reduce_mean(x,axis=(0,1,2)) [None,None,:]
-        std = tf.math.reduce_std (x,axis=(0,1,2) )[None,None,:]
-        x = (x-mean) / std
-        
         s = (img.shape[1:]) # remove batch dimension of input image shape
         vgg16 = VGG16(weights="imagenet", include_top=False, input_shape=s )
         vgg16.trainable = False ## Not trainable weights
