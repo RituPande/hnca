@@ -41,7 +41,8 @@ class GraphImgModel(Model):
             for i in range(self.num_steps):
                 x = self(x)
             loss = loss_fn(x)
-        variables = t.watched_variables()
+        #variables = t.watched_variables()
+        variables = self.trainable_variables
         grads = t.gradient(loss, variables)
         optimizer.apply_gradients(zip(grads, variables))
         return loss
