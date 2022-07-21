@@ -22,6 +22,6 @@ def to_rgb(x):
 def plot_loss(loss_log):
   plt.figure(figsize=(10, 4))
   plt.title('Loss history ')
-  plt.plot(loss_log, '.', alpha=0.8)
+  plt.plot(loss_log,"-" , alpha=0.8)
   plt.show()
 
