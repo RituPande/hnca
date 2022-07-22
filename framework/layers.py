@@ -50,7 +50,7 @@ class LeafImgCA(Layer, ICellularAutomata):
         self.perception.trainable = False
 
         self.features =  Conv2D(filters=LeafImgCA.n_features, kernel_size=1, padding='same', activation = 'relu') 
-        self.new_state = Conv2D(filters=LeafImgCA.n_channels, kernel_size=1, padding='same', activation='sigmoid')
+        self.new_state = Conv2D(filters=LeafImgCA.n_channels, kernel_size=1, padding='same')
        
 
    
@@ -71,8 +71,7 @@ class LeafImgCA(Layer, ICellularAutomata):
         y = self.perception(x)
         y = self.features(y)
         y = self.new_state(y)
-        y = y*255.0 + x
-        y = tf.clip_by_value( y, 0.0, 255.0 ) 
+        y = y + x
         return y
         
     @staticmethod
@@ -127,7 +126,7 @@ class LeafImgCA(Layer, ICellularAutomata):
         target_style = LeafImgCA._calc_styles_vgg(target_img)
         
         def loss_f(img):
-            img = to_rgb(img)
+            img = tf.clip_by_value(to_rgb(img), 0, 255.0)
             loss = np.inf
             if loss_type in ['gram','ot']:
                 img_style = LeafImgCA._calc_styles_vgg(img)
