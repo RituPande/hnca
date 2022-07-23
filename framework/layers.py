@@ -1,10 +1,10 @@
-from sympy import Le
 from hnca.framework.idefs import ICellularAutomata
 from hnca.framework.utils import to_rgb
 import tensorflow as tf
 from tensorflow import keras
 from  keras.layers import Layer, Conv2D, DepthwiseConv2D
 from keras.applications.vgg16 import VGG16, preprocess_input
+from  numpy import random
 
 
 import numpy as np
@@ -49,8 +49,15 @@ class LeafImgCA(Layer, ICellularAutomata):
 
         self.perception.trainable = False
 
-        self.features =  Conv2D(filters=LeafImgCA.n_features, kernel_size=1, padding='same', activation = 'relu') 
-        self.new_state = Conv2D(filters=LeafImgCA.n_channels, kernel_size=1, padding='same')
+        self.features =  Conv2D(filters=LeafImgCA.n_features,\
+             kernel_size=1,\
+                 padding='same',\
+                     activation = 'relu') 
+
+        self.new_state = Conv2D(filters=LeafImgCA.n_channels,\
+            kernel_size=1,\
+                 padding='same',\
+                    kernel_initializer=tf.keras.initializers.Zeros())
        
 
    
@@ -90,7 +97,8 @@ class LeafImgCA(Layer, ICellularAutomata):
         vgg16.trainable = False ## Not trainable weights
         
         style_layers = [1, 4, 7,  11, 15]  
-                
+        #style_layers = [1]
+
         b, h, w, c  = x.shape
         features = [tf.reshape(x, (b, h*w, c) )]
 
@@ -126,7 +134,8 @@ class LeafImgCA(Layer, ICellularAutomata):
         target_style = LeafImgCA._calc_styles_vgg(target_img)
         
         def loss_f(img):
-            img = tf.clip_by_value(to_rgb(img), 0, 255.0)
+            print(to_rgb(img) )
+            img = tf.clip_by_value(to_rgb(img)*255.0, 0, 255.0)
             loss = np.inf
             if loss_type in ['gram','ot']:
                 img_style = LeafImgCA._calc_styles_vgg(img)
@@ -135,7 +144,7 @@ class LeafImgCA(Layer, ICellularAutomata):
                 elif loss_type=='ot':   
                     loss = [LeafImgCA._gram_ot(y_true,y_pred) for y_true, y_pred in zip(target_style, img_style)]
             
-            return tf.reduce_sum(loss)
+            return tf.reduce_mean(loss)
            
         return loss_f
 
