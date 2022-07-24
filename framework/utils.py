@@ -6,7 +6,7 @@ import PIL
 def load_image( image_path, max_size = 224):  
   img =  PIL.Image.open(image_path)
   img.thumbnail((max_size, max_size), PIL.Image.ANTIALIAS)
-  img = np.float32(img)/255.0
+  img = np.float32(img)
   return img
 
 def show_image( img ):
