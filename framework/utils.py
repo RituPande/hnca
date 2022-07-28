@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import PIL
 
-def load_image( image_path, max_size = 224):  
+def load_image( image_path, max_size = 128):  
   img =  PIL.Image.open(image_path)
   img.thumbnail((max_size, max_size), PIL.Image.ANTIALIAS)
   img = np.float32(img)
