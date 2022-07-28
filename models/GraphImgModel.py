@@ -44,9 +44,9 @@ class GraphImgModel(Model):
         with tf.GradientTape() as t:
             for i in range(self.num_steps):
                 x = self(x)
-                
+             
             loss = self.loss(x, 'gram')
-            print('loss=',loss)
+            
         #variables = t.watched_variables()
         variables = self.trainable_variables
                
