@@ -68,9 +68,9 @@ class GraphImgModel(Model):
         return loss_log
 
 
-    def predict( self ):
+    def create( self, num_steps = 50 ):
         x = LeafImgCA.make_seed(self.target_size, n=1)
-        for _ in range(self.num_steps):
+        for _ in range(num_steps):
             x = self(x)
         return x
     
