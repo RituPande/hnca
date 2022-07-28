@@ -1,9 +1,9 @@
 from hnca.framework.idefs import ICellularAutomata
-from hnca.framework.utils import to_rgb
+
 import tensorflow as tf
 from tensorflow import keras
 from  keras.layers import Layer, Conv2D, DepthwiseConv2D
-from keras.applications.vgg16 import VGG16, preprocess_input
+
 from  numpy import random
 
 
@@ -88,66 +88,9 @@ class LeafImgCA(Layer, ICellularAutomata):
 
     def alive_masking(self, x):
         pass
+
+
     
-    @staticmethod
-    def _calc_styles_vgg(img):
-        x = preprocess_input(img)
-        s = (img.shape[1:]) # remove batch dimension of input image shape
-        vgg16 = VGG16(weights="imagenet", include_top=False, input_shape=s )
-        vgg16.trainable = False ## Not trainable weights
-        
-        style_layers = [1, 4, 7,  11, 15]  
-        #style_layers = [1]
-
-        b, h, w, c  = x.shape
-        features = [tf.reshape(x, (b, h*w, c) )]
-
-        for i in range(max(style_layers)+1):
-            x = vgg16.layers[i](x)
-            if i in style_layers:
-                b, h, w,c = x.shape
-                features.append(tf.reshape(x, (b, h*w,c) ) )
-            
-        return features
-
-
-    @staticmethod
-    def _gram_loss(y_true,y_pred):
-        
-        y_true = tf.squeeze(y_true)
-        y_pred = tf.squeeze(y_pred)
-
-        G_true = tf.matmul(tf.transpose(y_true),y_true)
-        G_pred = tf.matmul(tf.transpose(y_pred),y_pred)
-
-        loss = tf.reduce_mean(tf.square(G_true - G_pred))
-        loss =  tf.cast(loss, dtype=tf.float32)
-        return loss
-
-    @staticmethod
-    def _ot_loss(y_true,y_pred):
-        pass
-    
-    @staticmethod
-    def create_vgg_loss_fn(target_img, loss_type='gram'):
-        
-        target_style = LeafImgCA._calc_styles_vgg(target_img)
-        
-        def loss_f(img):
-            print(to_rgb(img) )
-            img = tf.clip_by_value(to_rgb(img)*255.0, 0, 255.0)
-            loss = np.inf
-            if loss_type in ['gram','ot']:
-                img_style = LeafImgCA._calc_styles_vgg(img)
-                if loss_type=='gram':
-                    loss = [LeafImgCA._gram_loss(y_true,y_pred) for y_true, y_pred in zip(target_style, img_style)]
-                elif loss_type=='ot':   
-                    loss = [LeafImgCA._gram_ot(y_true,y_pred) for y_true, y_pred in zip(target_style, img_style)]
-            
-            return tf.reduce_mean(loss)
-           
-        return loss_f
-
     #TODO
     #Implement the abstract methods of the base class
     
