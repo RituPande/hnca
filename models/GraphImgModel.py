@@ -28,7 +28,7 @@ class GraphImgModel(Model):
         
         self.ca_leaf = LeafImgCA( )
         self.num_steps = num_steps
-        self.target_size = 224
+        self.target_size = 128
         self.target_img = load_image(leaf_ca_target)[None,:,:,:3]
         self.loss = StyleLoss( self.target_img )
        
