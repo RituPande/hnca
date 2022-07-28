@@ -1,4 +1,5 @@
 from hnca.framework.layers import LeafImgCA, HCA
+from hnca.framework.losses import StyleLoss
 from hnca.framework.utils import load_image, show_image, plot_loss
 import tensorflow as tf
 import numpy as np
@@ -29,6 +30,7 @@ class GraphImgModel(Model):
         self.num_steps = num_steps
         self.target_size = 224
         self.target_img = load_image(leaf_ca_target)[None,:,:,:3]
+        self.loss = StyleLoss( self.target_img )
        
         
     def call(self, x, training=None ):
@@ -36,29 +38,31 @@ class GraphImgModel(Model):
         x = self.ca_leaf(x)
         return x
 
-    def _train_step( self,loss_fn, optimizer ):
-        
+    def _train_step( self, optimizer ):
+
         x = LeafImgCA.make_seed(self.target_size)
         with tf.GradientTape() as t:
             for i in range(self.num_steps):
                 x = self(x)
                 
-            loss = loss_fn(x)
+            loss = self.loss(x, 'gram')
+            print('loss=',loss)
         #variables = t.watched_variables()
         variables = self.trainable_variables
+               
         grads = t.gradient(loss, variables)
         #grads = [g/(tf.norm(g)+1e-8) for g in grads]
         optimizer.apply_gradients(zip(grads, variables))
         return loss
 
-    def train( self, lr=0.01, num_epochs= 5 ):
+    def train( self, lr=1e-6, num_epochs= 5 ):
 
-        loss_fn = LeafImgCA.create_vgg_loss_fn(self.target_img)
+        
         optimizer = tf.keras.optimizers.Adam(lr)
         loss_log = []
         for e in tqdm(range(num_epochs)):
             
-            loss = self._train_step(loss_fn, optimizer )
+            loss = self._train_step(optimizer)
             loss_log.append(loss.numpy())
         
         return loss_log
