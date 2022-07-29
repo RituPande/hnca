@@ -11,7 +11,7 @@ def load_image( image_path, max_size = 128):
 
 def show_image( img ):
   img = PIL.Image.fromarray(np.uint8(img) , mode='RGB') 
-  img.show()
+  display(img)
 
 def to_rgba(x):
   return x[..., :4]
