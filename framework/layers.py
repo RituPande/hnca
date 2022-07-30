@@ -2,7 +2,7 @@ from hnca.framework.idefs import ICellularAutomata
 
 import tensorflow as tf
 from tensorflow import keras
-from  keras.layers import Layer, Conv2D, DepthwiseConv2D, Activation, Concatenate
+from  keras.layers import Layer, Conv2D, DepthwiseConv2D, Activation, Concatenate, Lambda
 
 from  numpy import random
 
@@ -59,7 +59,10 @@ class LeafImgCA(Layer, ICellularAutomata):
                  padding='same',\
                     kernel_initializer=tf.keras.initializers.Zeros())
        
-        self.scale = Activation('sigmoid')
+        self.split_rgb_latent = Lambda( lambda x : tf.split(x, [3, x.shape[-1]-3], axis=-1 ) )
+        self.rgb_rescale = Activation('sigmoid')
+        self.out = Concatenate()
+       
            
     @staticmethod
     def _init_static_vars():
@@ -79,8 +82,10 @@ class LeafImgCA(Layer, ICellularAutomata):
         y = self.features(y)
         y = self.new_state(y)
         y = y + x
-        y = self.scale(y)
-        return y
+        rgb, latent = self.split_rgb_latent(y)
+        rgb = self.rgb_rescale(rgb)
+        out = self.out([rgb, latent])
+        return out
         
     @staticmethod
     def make_seed(size, n=1):
