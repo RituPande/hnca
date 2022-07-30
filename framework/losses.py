@@ -13,7 +13,8 @@ class StyleLoss:
         self.target_style = self._calc_styles_vgg(target_img)
 
     def __call__(self, x, loss_type='gram' ):
-        img = tf.clip_by_value(to_rgb(x)*255.0, 0, 255.0)
+        #img = tf.clip_by_value(to_rgb(x)*255.0, 0, 255.0)
+        img = to_rgb(x)*255.0
         loss = np.inf
         if loss_type in ['gram','ot']:
             img_style = self._calc_styles_vgg(img)

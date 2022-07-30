@@ -2,7 +2,7 @@ from hnca.framework.idefs import ICellularAutomata
 
 import tensorflow as tf
 from tensorflow import keras
-from  keras.layers import Layer, Conv2D, DepthwiseConv2D
+from  keras.layers import Layer, Conv2D, DepthwiseConv2D, Activation, Concatenate
 
 from  numpy import random
 
@@ -59,8 +59,8 @@ class LeafImgCA(Layer, ICellularAutomata):
                  padding='same',\
                     kernel_initializer=tf.keras.initializers.Zeros())
        
-
-   
+        self.scale = Activation('sigmoid')
+           
     @staticmethod
     def _init_static_vars():
         if not hasattr(LeafImgCA, "n_channels"):
@@ -79,6 +79,7 @@ class LeafImgCA(Layer, ICellularAutomata):
         y = self.features(y)
         y = self.new_state(y)
         y = y + x
+        y = self.scale(y)
         return y
         
     @staticmethod
