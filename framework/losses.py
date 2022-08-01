@@ -4,32 +4,29 @@ from keras.applications.vgg16 import VGG16, preprocess_input
 from hnca.framework.utils import to_rgb
 
 class StyleLoss:
-    def __init__(self, target_img):
+    def __init__(self, target_img, loss_type):
         self.target_img = target_img
         s = (target_img.shape[1:]) # remove batch dimension of input image shape
         self.vgg16 = VGG16(weights="imagenet", include_top=False, input_shape=s )
         self.vgg16.trainable = False ## Not trainable weights
         self.style_layers = [1, 4, 7,  11, 15]  
         self.target_style = self._calc_styles_vgg(target_img)
+        self.loss_type = loss_type
 
-    def __call__(self, x, loss_type='gram' ):
+    def __call__(self, x  ):
         #img = tf.clip_by_value(to_rgb(x)*255.0, 0, 255.0)
         img = to_rgb(x)*255.0
         loss = np.inf
-        if loss_type in ['gram','ot']:
+        if self.loss_type in ['gram','ot']:
             img_style = self._calc_styles_vgg(img)
-            if loss_type=='gram':
+            if self.loss_type=='gram':
                 loss = [self._gram_loss(y_true,y_pred) for y_true, y_pred in zip(self.target_style, img_style)]
-            elif loss_type=='ot':   
+            elif self.loss_type=='ot':   
                 loss = [self._ot_loss(y_true,y_pred) for y_true, y_pred in zip(self.target_style, img_style)]
                                 
-            loss = tf.reduce_sum(loss)
-        else:
-            print("Unsupported loss type")
-        return loss 
-
-    def _ot_loss(self, img):
-        pass
+            else:
+                print("Unsupported loss type")
+        return tf.reduce_sum(loss)
 
     def _calc_styles_vgg(self, img):
         x = preprocess_input(img)
@@ -54,11 +51,20 @@ class StyleLoss:
         G_true = tf.matmul(tf.transpose(y_true,perm=[0,2,1]),y_true)
         G_pred = tf.matmul(tf.transpose(y_pred, perm = [0,2,1]),y_pred)
 
-        loss = tf.reduce_sum(tf.square(G_true - G_pred), axis=[1,2])/(4.0 * (c ** 2) * ( size** 2))
+        loss = tf.reduce_sum(tf.square(G_true - G_pred))/(4.0 * (c ** 2) * ( size** 2))
 
-        loss =  tf.cast(tf.reduce_sum(loss), dtype=tf.float32)
+        loss =  tf.cast(loss, dtype=tf.float32)
         return loss
-       
 
-
+    def _ot_loss(self, y_true, y_pred, n_directions =  32 ):
         
+        b, size, c = y_true.shape
+        p_vecs,_ = tf.linalg.normalize(tf.random.normal( shape=(c, n_directions ) ), axis = 0 )  # create  n_directions unit vectors with c dimensions
+
+        proj_true = tf.einsum('bnc,cp->bpn', y_true, p_vecs)
+        proj_true = tf.sort(proj_true) # sort on axis = -1
+        proj_pred = tf.einsum('bnc,cp->bpn', y_pred, p_vecs)
+        proj_pred = tf.sort(proj_pred)
+        loss = tf.reduce_mean(tf.square(proj_true - proj_pred )) # loss for each pixel in each direction and take their mean
+        loss = tf.cast(loss, dtype=tf.float32 ) # take mean of loss across all directions 
+        return loss
