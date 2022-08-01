@@ -11,7 +11,8 @@ def load_image( image_path, max_size = 128):
 
 def show_image( img ):
   img = PIL.Image.fromarray(np.uint8(img) , mode='RGB') 
-  display(img)
+  #display(img)
+  img.show()
 
 def to_rgba(x):
   return x[..., :4]
@@ -30,6 +31,6 @@ def to_rgb(x):
 def plot_loss(loss_log):
   plt.figure(figsize=(10, 4))
   plt.title('Loss history ')
-  plt.plot(loss_log,"-" , alpha=0.8)
+  plt.plot(loss_log,"o" , alpha=0.8)
   plt.show()
 
