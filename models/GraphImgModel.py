@@ -30,7 +30,7 @@ class GraphImgModel(Model):
         self.num_steps = num_steps
         self.target_size = 128
         self.target_img = load_image(leaf_ca_target)[None,:,:,:3]
-        self.loss = StyleLoss( np.copy(self.target_img) )
+        self.loss = StyleLoss( np.copy(self.target_img), 'ot' )
        
         
     def call(self, x, training=None ):
@@ -45,7 +45,7 @@ class GraphImgModel(Model):
             for i in range(self.num_steps):
                 x = self(x)
              
-            loss = self.loss(tf.identity(x), 'gram')
+            loss = self.loss(tf.identity(x))
             
         #variables = t.watched_variables()
         variables = self.trainable_variables
@@ -55,7 +55,7 @@ class GraphImgModel(Model):
         optimizer.apply_gradients(zip(grads, variables))
         return loss
 
-    def train( self, lr=1e-6, num_epochs= 5 ):
+    def train( self, lr=1e-6, num_epochs= 5000 ):
 
         
         optimizer = tf.keras.optimizers.Adam(lr)
