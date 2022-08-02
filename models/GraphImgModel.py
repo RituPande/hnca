@@ -1,5 +1,5 @@
 from hnca.framework.layers import LeafImgCA, HCA
-from hnca.framework.losses import StyleLoss
+from hnca.framework.losses import StyleLoss, MSELoss
 from hnca.framework.utils import load_image, show_image, plot_loss
 import tensorflow as tf
 import numpy as np
@@ -30,10 +30,13 @@ class GraphImgModel(Model):
         self.num_steps = num_steps
         self.target_size = 128
         self.target_img = load_image(leaf_ca_target)[None,:,:,:3]
-        self.leaf_ca_loss = StyleLoss( np.copy(self.target_img), leaf_ca_loss_type )
-        
-       
-        
+        if leaf_ca_loss_type in ['gram','ot']:
+            self.leaf_ca_loss = StyleLoss( np.copy(self.target_img), leaf_ca_loss_type )
+        elif leaf_ca_loss_type == 'mse':
+            self.leaf_ca_loss = MSELoss(np.copy(self.target_img) )
+        else :
+            print("Loss type not supported")
+            
     def call(self, x, training=None ):
         
         x = self.ca_leaf(x)
