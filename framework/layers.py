@@ -51,13 +51,11 @@ class LeafImgCA(Layer, ICellularAutomata):
 
         self.features =  Conv2D(filters=LeafImgCA.n_features,\
              kernel_size=1,\
-                 padding='same',\
-                     activation = 'relu') 
+                activation = 'relu') 
 
         self.new_state = Conv2D(filters=LeafImgCA.n_channels,\
             kernel_size=1,\
-                 padding='same',\
-                    kernel_initializer=tf.keras.initializers.Zeros())
+                kernel_initializer=tf.keras.initializers.Zeros())
        
         self.split_rgb_latent = Lambda( lambda x : tf.split(x, [3, x.shape[-1]-3], axis=-1 ) )
         self.rgb_rescale = Activation('sigmoid')
