@@ -81,10 +81,10 @@ class LeafImgCA(Layer, ICellularAutomata):
         y = self.perception(x)
         y = self.features(y)
         y = self.new_state(y)
-        y = y + x
-        rgb, latent = self.split_rgb_latent(y)
-        rgb = self.rgb_rescale(rgb)
-        out = self.out([rgb, latent])
+        out = y + x
+        #rgb, latent = self.split_rgb_latent(out)
+        #rgb = self.rgb_rescale(rgb)
+        #out = self.out([rgb, latent])
         return out
         
     @staticmethod
