@@ -59,7 +59,7 @@ class LeafImgCA(Layer, ICellularAutomata):
        
         self.split_rgb_latent = Lambda( lambda x : tf.split(x, [3, x.shape[-1]-3], axis=-1 ) )
         self.rgb_rescale = Activation('sigmoid')
-        self.out = Concatenate()
+        self.y = Concatenate()
        
            
     @staticmethod
@@ -82,12 +82,12 @@ class LeafImgCA(Layer, ICellularAutomata):
         y = tf.clip_by_value(y, 0, 2.0 )
         y = self.new_state(y)
         y = tf.clip_by_value(y, -2.0, 2.0 )
-        out = y + x
+        y = y + x
         y = tf.clip_by_value(y, -2.0, 2.0 )
-        #rgb, latent = self.split_rgb_latent(out)
+        #rgb, latent = self.split_rgb_latent(y)
         #rgb = self.rgb_rescale(rgb)
-        #out = self.out([rgb, latent])
-        return out
+        #y = self.y([rgb, latent])
+        return y
         
     @staticmethod
     def make_seed(size, n=1):
