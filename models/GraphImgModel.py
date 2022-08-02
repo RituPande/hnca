@@ -30,7 +30,7 @@ class GraphImgModel(Model):
         self.num_steps = num_steps
         self.target_size = 128
         self.target_img = load_image(leaf_ca_target)[None,:,:,:3]
-        self.loss = StyleLoss( np.copy(self.target_img), 'ot' )
+        self.loss = StyleLoss( np.copy(self.target_img), 'gram' )
        
         
     def call(self, x, training=None ):
