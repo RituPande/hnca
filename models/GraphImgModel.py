@@ -23,14 +23,15 @@ Methods
 
 class GraphImgModel(Model):
 
-    def __init__( self, num_steps, leaf_ca_target ):
+    def __init__( self, num_steps, leaf_ca_target, leaf_ca_loss_type='gram' ):
         super(GraphImgModel,self).__init__()
         
         self.ca_leaf = LeafImgCA( )
         self.num_steps = num_steps
         self.target_size = 128
         self.target_img = load_image(leaf_ca_target)[None,:,:,:3]
-        self.loss = StyleLoss( np.copy(self.target_img), 'gram' )
+        self.leaf_ca_loss = StyleLoss( np.copy(self.target_img), leaf_ca_loss_type )
+        
        
         
     def call(self, x, training=None ):
@@ -45,7 +46,7 @@ class GraphImgModel(Model):
             for i in range(self.num_steps):
                 x = self(x)
              
-            loss = self.loss(tf.identity(x))
+            loss = self.leaf_ca_loss(tf.identity(x))
             
         #variables = t.watched_variables()
         variables = self.trainable_variables
