@@ -1,6 +1,6 @@
 from hnca.framework.layers import LeafImgCA, HCA
 from hnca.framework.losses import StyleLoss, MSELoss
-from hnca.framework.utils import load_image, show_image, plot_loss, ReplayBuffer
+from hnca.framework.utils import load_image, show_image, plot_loss
 import tensorflow as tf
 import numpy as np
 from tensorflow import keras
