@@ -1,6 +1,6 @@
 from hnca.framework.layers import LeafImgCA, HCA
 from hnca.framework.losses import StyleLoss, MSELoss
-from hnca.framework.utils import load_image, show_image, plot_loss
+from hnca.framework.utils import load_image, show_image, plot_loss, ReplayBuffer
 import tensorflow as tf
 import numpy as np
 from tensorflow import keras
@@ -36,22 +36,28 @@ class GraphImgModel(Model):
             self.leaf_ca_loss = MSELoss(np.copy(self.target_img) )
         else :
             print("Loss type not supported")
-            
+
+        self.replay_buffer = ReplayBuffer(max_len=256)
+              
+          
+
     def call(self, x, training=None ):
         
         x = self.ca_leaf(x)
         return x
 
-    def _train_step( self, optimizer ):
+    def _train_step( self, optimizer, batch_size=4 ):
 
-        x = LeafImgCA.make_seed(self.target_size)
+        x = self.replay_buffer.sample_batch(batch_size)
+        x[0] = np.squeeze(LeafImgCA.make_seed(self.target_size))
+        
         with tf.GradientTape() as t:
             for i in range(self.num_steps):
                 x = self(x)
-             
+
             loss = self.leaf_ca_loss(tf.identity(x))
-            
-        #variables = t.watched_variables()
+            self.replay_buffer.add(x)
+        
         variables = self.trainable_variables
                
         grads = t.gradient(loss, variables)
@@ -59,8 +65,10 @@ class GraphImgModel(Model):
         optimizer.apply_gradients(zip(grads, variables))
         return loss
 
-    def train( self, lr=1e-6, num_epochs= 5000 ):
+    def train( self, lr=1e-6, num_epochs= 5000, batch_size=4 ):
 
+        init_batch = LeafImgCA.make_seed(self.target_size,n=batch_size)
+        self.replay_buffer.add(init_batch)
         
         optimizer = tf.keras.optimizers.Adam(lr)
         loss_log = []
