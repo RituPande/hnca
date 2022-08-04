@@ -46,17 +46,22 @@ class GraphImgModel(Model):
         x = self.ca_leaf(x)
         return x
 
-    def _train_step( self, optimizer, batch_size=4 ):
+    #dont enable use_pool as the feature is not stable yet
+    def _train_step( self, optimizer, use_pool=False, batch_size=4 ):
 
-        x = self.replay_buffer.sample_batch(batch_size)
-        x[0] = np.squeeze(LeafImgCA.make_seed(self.target_size))
-        
+        if use_pool:
+            x = self.replay_buffer.sample_batch(batch_size)
+            x[0] = np.squeeze(LeafImgCA.make_seed(self.target_size))
+        else:
+            x = LeafImgCA.make_seed(self.target_size)
+
         with tf.GradientTape() as t:
             for i in range(self.num_steps):
                 x = self(x)
 
             loss = self.leaf_ca_loss(tf.identity(x))
-            self.replay_buffer.add(x)
+            if use_pool:
+                self.replay_buffer.add(x)
         
         variables = self.trainable_variables
                
@@ -65,10 +70,11 @@ class GraphImgModel(Model):
         optimizer.apply_gradients(zip(grads, variables))
         return loss
 
-    def train( self, lr=1e-6, num_epochs= 5000, batch_size=4 ):
+    def train( self, lr=1e-6, num_epochs= 5000, use_pool=False, batch_size=4 ):
 
-        init_batch = LeafImgCA.make_seed(self.target_size,n=batch_size)
-        self.replay_buffer.add(init_batch)
+        if use_pool:
+            init_batch = LeafImgCA.make_seed(self.target_size,n=batch_size)
+            self.replay_buffer.add(init_batch)
         
         optimizer = tf.keras.optimizers.Adam(lr)
         loss_log = []
