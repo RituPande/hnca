@@ -46,8 +46,8 @@ class GraphImgModel(Model):
         x = self.ca_leaf(x)
         return x
 
-    #dont enable use_pool as the feature is not stable yet
-    def _train_step( self, optimizer, use_pool, batch_size=1, use_seed=True):
+    
+    def _train_step( self, optimizer, use_pool, batch_size=2, use_seed=True):
 
         if use_pool:
             idx = np.random.choice(len(self.replay_buffer), batch_size ) # select random index's from the replay_buffer
@@ -72,12 +72,12 @@ class GraphImgModel(Model):
         optimizer.apply_gradients(zip(grads, variables))
         return loss
 
-    def train( self, lr=1e-6, num_epochs= 5000, use_pool=False, batch_size=2 ):
+    def train( self, lr=1e-6, num_epochs= 5000, use_pool=False, batch_size=2, seeding_epoch_multiple=2 ):
 
         optimizer = tf.keras.optimizers.Adam(lr)
         loss_log = []
         for e in tqdm(range(num_epochs)):
-            use_seed = True if e % 2 == 0 else False
+            use_seed = True if e % seeding_epoch_multiple == 0 else False
             loss = self._train_step(optimizer, use_pool, batch_size, use_seed)
             loss_log.append(loss.numpy())
         
