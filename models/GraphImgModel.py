@@ -37,7 +37,7 @@ class GraphImgModel(Model):
         else :
             print("Loss type not supported")
 
-        self.replay_buffer = ReplayBuffer(max_len=256)
+        self.replay_buffer = self.ca_leaf.make_seed(size=128, n=256)
               
           
 
@@ -50,7 +50,8 @@ class GraphImgModel(Model):
     def _train_step( self, optimizer, use_pool=False, batch_size=4 ):
 
         if use_pool:
-            x = self.replay_buffer.sample_batch(batch_size)
+            idx = np.random.choice(len(self.replay_buffer), batch_size ) # select random index's from the replay_buffer
+            x = self.replay_buffer[idx]
             x[0] = np.squeeze(LeafImgCA.make_seed(self.target_size))
         else:
             x = LeafImgCA.make_seed(self.target_size)
@@ -61,7 +62,7 @@ class GraphImgModel(Model):
 
             loss = self.leaf_ca_loss(tf.identity(x))
             if use_pool:
-                self.replay_buffer.add(x)
+                self.replay_buffer[idx] = x.numpy()
         
         variables = self.trainable_variables
                
@@ -72,15 +73,11 @@ class GraphImgModel(Model):
 
     def train( self, lr=1e-6, num_epochs= 5000, use_pool=False, batch_size=4 ):
 
-        if use_pool:
-            init_batch = LeafImgCA.make_seed(self.target_size,n=batch_size)
-            self.replay_buffer.add(init_batch)
-        
         optimizer = tf.keras.optimizers.Adam(lr)
         loss_log = []
         for e in tqdm(range(num_epochs)):
             
-            loss = self._train_step(optimizer)
+            loss = self._train_step(optimizer, use_pool, batch_size)
             loss_log.append(loss.numpy())
         
         return loss_log
