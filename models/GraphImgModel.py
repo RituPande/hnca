@@ -48,7 +48,7 @@ class GraphImgModel(Model):
         return x
 
    # dont enable use_pool option as its implementation is not stable yet 
-    def _train_step( self, optimizer, use_pool, batch_size=1, use_seed=True):
+    def _train_step( self, optimizer, use_pool, batch_size=1):
 
         if use_pool:
             x = self.replay_buffer.sample_batch(batch_size)
@@ -70,14 +70,14 @@ class GraphImgModel(Model):
         optimizer.apply_gradients(zip(grads, variables))
         return loss
 
-    def train( self, lr=1e-6, num_epochs= 5000, use_pool=False, batch_size=1, seeding_epoch_multiple=3 ):
+    def train( self, lr=1e-6, num_epochs= 5000, use_pool=False, batch_size=1):
 
-        lr_sched = tf.keras.optimizers.schedules.PiecewiseConstantDecay([1000,2000], [lr, lr*0.3, lr*0.3*0.3])
+        lr_sched = tf.keras.optimizers.schedules.PiecewiseConstantDecay([700,2000], [lr, lr*0.3, lr*0.3*0.3])
         optimizer = tf.keras.optimizers.Adam(lr_sched)
         loss_log = []
         for e in tqdm(range(num_epochs)):
-            use_seed = True if e % seeding_epoch_multiple == 0 else False
-            loss = self._train_step(optimizer, use_pool, batch_size, use_seed)
+            
+            loss = self._train_step(optimizer, e, use_pool, batch_size)
             loss_log.append(loss.numpy())
         
         return loss_log
