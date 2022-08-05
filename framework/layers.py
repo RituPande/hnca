@@ -77,16 +77,10 @@ class LeafImgCA(Layer, ICellularAutomata):
     def call( self, x, training=None ):
         
         y = self.perception(x)
-        y = tf.clip_by_value(y, -2.0, 2.0 )
         y = self.features(y)
-        y = tf.clip_by_value(y, 0, 2.0 )
         y = self.new_state(y)
-        y = tf.clip_by_value(y, -2.0, 2.0 )
         y = y + x
-        y = tf.clip_by_value(y, -2.0, 2.0 )
-        #rgb, latent = self.split_rgb_latent(y)
-        #rgb = self.rgb_rescale(rgb)
-        #y = self.y([rgb, latent])
+        
         return y
         
     @staticmethod

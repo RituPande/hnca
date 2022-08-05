@@ -39,7 +39,8 @@ def to_rgba(x):
 #  return tf.clip_by_value(x[..., 3:4], 0.0, 1.0)
 
 def to_rgb(x):
-  return x[..., :3]/2.0 + 0.5
+  return x[..., :3]
+  
   # assume rgb premultiplied by alpha
   #rgb, a = x[..., :3], to_alpha(x)
   #return 1.0-a+rgb

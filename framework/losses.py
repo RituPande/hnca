@@ -12,10 +12,11 @@ class StyleLoss:
         self.style_layers = [1, 4, 7,  11, 15]  
         self.target_style = self._calc_styles_vgg(target_img)
         self.loss_type = loss_type
+       
 
     def __call__(self, x  ):
         #img = tf.clip_by_value(to_rgb(x)*255.0, 0, 255.0)
-        img = to_rgb(x)*255.0
+        img = tf.sigmoid(to_rgb(x))*255.0
         loss = np.inf
         if self.loss_type in ['gram','ot']:
             img_style = self._calc_styles_vgg(img)
@@ -75,7 +76,7 @@ class MSELoss:
         self.target_img = tf.convert_to_tensor(target_img, dtype=tf.float32) 
 
     def __call__( self, x ):
-        img =  to_rgb(x)*255.0
+        img = tf.sigmoid(to_rgb(x))*255.0
         
         loss =  tf.reduce_mean(tf.square(self.target_img - img))
 
