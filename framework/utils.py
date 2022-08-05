@@ -4,6 +4,22 @@ import numpy as np
 import PIL
 from collections import deque
 import random 
+from collections import deque
+import random 
+
+class ReplayBuffer:
+  def __init__(self, max_len=256 ):
+    self.buffer = deque(maxlen=max_len) 
+
+  def add(self, x ) :
+    self.buffer.extendleft(x)
+
+  def sample_batch(self, batch_size):
+    mini_batch = random.sample( self.buffer, min(len(self.buffer), batch_size))
+    mini_batch = np.asarray(mini_batch)
+    return mini_batch
+
+
 
 def load_image( image_path, max_size = 128):  
   img =  PIL.Image.open(image_path)

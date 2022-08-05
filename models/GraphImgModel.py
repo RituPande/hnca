@@ -48,13 +48,13 @@ class GraphImgModel(Model):
         return x
 
    # dont enable use_pool option as its implementation is not stable yet 
-    def _train_step( self, optimizer, use_pool, batch_size=2, use_seed=True):
+    def _train_step( self, optimizer, use_pool, batch_size=1, use_seed=True):
 
         if use_pool:
             if use_seed:
                 x = LeafImgCA.make_seed(self.target_size)
             else:
-                x = self.replay_buffer.sample_batch(batch_size=1)
+                x = self.replay_buffer.sample_batch(batch_size)
         else:
             x = LeafImgCA.make_seed(self.target_size)
 
