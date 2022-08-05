@@ -48,7 +48,7 @@ class GraphImgModel(Model):
         return x
 
    # dont enable use_pool option as its implementation is not stable yet 
-    def _train_step( self, optimizer, use_pool, batch_size=1):
+    def _train_step( self, optimizer, curr_epoch, use_pool, batch_size=1):
 
         if use_pool:
             x = self.replay_buffer.sample_batch(batch_size)
@@ -61,7 +61,8 @@ class GraphImgModel(Model):
                 x = self(x)
             loss = self.leaf_ca_loss(tf.identity(x))
 
-        if use_pool:
+        # dont store outputs of initial few epochs as their outputs might not be stable.
+        if use_pool and curr_epoch > 600:
             self.replay_buffer.add(x.numpy())
                        
         variables = self.trainable_variables
@@ -72,7 +73,7 @@ class GraphImgModel(Model):
 
     def train( self, lr=1e-6, num_epochs= 5000, use_pool=False, batch_size=1):
 
-        lr_sched = tf.keras.optimizers.schedules.PiecewiseConstantDecay([700,2000], [lr, lr*0.3, lr*0.3*0.3])
+        lr_sched = tf.keras.optimizers.schedules.PiecewiseConstantDecay([500,2000], [lr, lr*0.3, lr*0.3*0.3])
         optimizer = tf.keras.optimizers.Adam(lr_sched)
         loss_log = []
         for e in tqdm(range(num_epochs)):
