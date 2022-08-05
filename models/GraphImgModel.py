@@ -66,7 +66,7 @@ class GraphImgModel(Model):
                        
         variables = self.trainable_variables
         grads = t.gradient(loss, variables)
-        #grads = [g/(tf.norm(g)+1e-8) for g in grads]
+        grads = [g/(tf.norm(g)+1e-8) for g in grads]
         optimizer.apply_gradients(zip(grads, variables))
         return loss
 
