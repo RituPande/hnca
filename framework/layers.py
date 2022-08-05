@@ -65,7 +65,7 @@ class LeafImgCA(Layer, ICellularAutomata):
     @staticmethod
     def _init_static_vars():
         if not hasattr(LeafImgCA, "n_channels"):
-            LeafImgCA.n_channels = 16 # exact channel count TBD
+            LeafImgCA.n_channels = 12 # exact channel count TBD
 
         if not hasattr(LeafImgCA, "n_schannels"):
             LeafImgCA.n_schannels = 8 # exact channel count TBD
