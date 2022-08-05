@@ -51,10 +51,8 @@ class GraphImgModel(Model):
     def _train_step( self, optimizer, use_pool, batch_size=1, use_seed=True):
 
         if use_pool:
-            if use_seed:
-                x = LeafImgCA.make_seed(self.target_size)
-            else:
-                x = self.replay_buffer.sample_batch(batch_size)
+            x = self.replay_buffer.sample_batch(batch_size)
+            x[0]= np.squeeze(LeafImgCA.make_seed(self.target_size))
         else:
             x = LeafImgCA.make_seed(self.target_size)
 
@@ -74,7 +72,8 @@ class GraphImgModel(Model):
 
     def train( self, lr=1e-6, num_epochs= 5000, use_pool=False, batch_size=1, seeding_epoch_multiple=3 ):
 
-        optimizer = tf.keras.optimizers.Adam(lr)
+        lr_sched = tf.keras.optimizers.schedules.PiecewiseConstantDecay([1000,2000], [lr, lr*0.3, lr*0.3*0.3])
+        optimizer = tf.keras.optimizers.Adam(lr_sched)
         loss_log = []
         for e in tqdm(range(num_epochs)):
             use_seed = True if e % seeding_epoch_multiple == 0 else False
