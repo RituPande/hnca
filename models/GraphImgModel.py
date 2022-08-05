@@ -1,6 +1,6 @@
 from hnca.framework.layers import LeafImgCA, HCA
 from hnca.framework.losses import StyleLoss, MSELoss
-from hnca.framework.utils import load_image, show_image, plot_loss
+from hnca.framework.utils import load_image, show_image, plot_loss, ReplayBuffer
 import tensorflow as tf
 import numpy as np
 from tensorflow import keras
@@ -37,7 +37,8 @@ class GraphImgModel(Model):
         else :
             print("Loss type not supported")
 
-        self.replay_buffer = self.ca_leaf.make_seed(size=128, n=256)
+        self.replay_buffer = ReplayBuffer()
+        self.replay_buffer.add( self.ca_leaf.make_seed(size=128, n=256))
               
           
 
@@ -50,29 +51,28 @@ class GraphImgModel(Model):
     def _train_step( self, optimizer, use_pool, batch_size=2, use_seed=True):
 
         if use_pool:
-            idx = np.random.choice(len(self.replay_buffer), batch_size ) # select random index's from the replay_buffer
-            x = self.replay_buffer[idx]
             if use_seed:
-                x[0] = np.squeeze(LeafImgCA.make_seed(self.target_size))
+                x = LeafImgCA.make_seed(self.target_size)
+            else:
+                x = self.replay_buffer.sample_batch(batch_size=1)
         else:
             x = LeafImgCA.make_seed(self.target_size)
 
         with tf.GradientTape() as t:
             for i in range(self.num_steps):
                 x = self(x)
-
             loss = self.leaf_ca_loss(tf.identity(x))
-            if use_pool:
-                self.replay_buffer[idx] = x.numpy()
-        
+
+        if use_pool:
+            self.replay_buffer.add(x.numpy())
+                       
         variables = self.trainable_variables
-               
         grads = t.gradient(loss, variables)
         #grads = [g/(tf.norm(g)+1e-8) for g in grads]
         optimizer.apply_gradients(zip(grads, variables))
         return loss
 
-    def train( self, lr=1e-6, num_epochs= 5000, use_pool=False, batch_size=2, seeding_epoch_multiple=2 ):
+    def train( self, lr=1e-6, num_epochs= 5000, use_pool=False, batch_size=1, seeding_epoch_multiple=3 ):
 
         optimizer = tf.keras.optimizers.Adam(lr)
         loss_log = []
