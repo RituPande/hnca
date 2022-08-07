@@ -30,8 +30,8 @@ class StyleLoss:
         return tf.reduce_sum(loss)
 
     def _calc_styles_vgg(self, img):
-        x = preprocess_input(img)
-       
+        #x = preprocess_input(img)
+        x = img[..., ::-1] - np.float32([103.939, 116.779, 123.68])
         #[print(self.vgg16.layers[i].name) for i in self.style_layers]
       
         #b, h, w, c  = x.shape

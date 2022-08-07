@@ -71,7 +71,7 @@ class LeafImgCA(Layer, ICellularAutomata):
             LeafImgCA.n_schannels = 8 # exact channel count TBD
 
         if not hasattr(LeafImgCA, "n_features"):
-            LeafImgCA.n_features = 128 # exact channel count TBD
+            LeafImgCA.n_features = LeafImgCA.n_channels*4 # exact channel count TBD
 
   
     def call( self, x, training=None ):
