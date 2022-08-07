@@ -62,7 +62,7 @@ class GraphImgModel(Model):
             loss = self.leaf_ca_loss(tf.identity(x))
 
         # dont store outputs of initial few epochs as their outputs might not be stable.
-        if use_pool and curr_epoch > 600:
+        if use_pool :
             self.replay_buffer.add(x.numpy())
                        
         variables = self.trainable_variables
