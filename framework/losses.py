@@ -48,7 +48,6 @@ class StyleLoss:
     def _gram_loss(self, y_true, y_pred):
         
         b, size, c = y_true.shape
-        y_pred = tf.sqrt(y_pred+1.0)-1.0
         G_true = tf.matmul(tf.transpose(y_true,perm=[0,2,1]),y_true)
         G_pred = tf.matmul(tf.transpose(y_pred, perm = [0,2,1]),y_pred)
 
