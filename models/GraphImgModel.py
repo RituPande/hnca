@@ -53,8 +53,8 @@ class GraphImgModel(Model):
 
         if use_pool:
             x = self.replay_buffer.sample_batch(batch_size)
-            #if curr_epoch % 8 == 0:
-            x[:1]= LeafImgCA.make_seed(self.target_size)
+            if curr_epoch % 8 == 0:
+              x[:1]= LeafImgCA.make_seed(self.target_size)
         else:
             x = LeafImgCA.make_seed(self.target_size)
 
