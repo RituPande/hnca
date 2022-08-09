@@ -34,9 +34,9 @@ class StyleLoss:
         x = img[..., ::-1] - np.float32([103.939, 116.779, 123.68])
         #[print(self.vgg16.layers[i].name) for i in self.style_layers]
       
-        #b, h, w, c  = x.shape
-        #features = [tf.reshape(x, (b, h*w, c) )]        
-        features = []
+        b, h, w, c  = x.shape
+        features = [tf.reshape(x, (b, h*w, c) )]        
+        #features = []
         for i in range(max(self.style_layers)+1):
             x = self.vgg16.layers[i](x)
             if i in self.style_layers:
@@ -65,7 +65,7 @@ class StyleLoss:
         proj_true = tf.sort(proj_true) # sort on axis = -1
         proj_pred = tf.einsum('bnc,cp->bpn', y_pred, p_vecs)
         proj_pred = tf.sort(proj_pred)
-        loss = tf.reduce_mean(tf.square(proj_true - proj_pred )) # loss for each pixel in each direction and take their mean
+        loss = tf.reduce_sum(tf.square(proj_true - proj_pred )) # loss for each pixel in each direction and take their mean
         loss = tf.cast(loss, dtype=tf.float32 ) # take mean of loss across all directions 
         return loss
 
