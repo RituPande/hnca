@@ -75,7 +75,7 @@ class GraphImgModel(Model):
         optimizer.apply_gradients(zip(grads, variables))
         return loss
 
-    def train( self, lr=1e-3, num_epochs= 5000, use_pool=True, batch_size=1):
+    def train( self, lr=1e-3, num_epochs= 5000, use_pool=True, batch_size=4):
 
         lr_sched = tf.keras.optimizers.schedules.PiecewiseConstantDecay([1000,2000], [lr, lr*0.3, lr*0.3*0.3])
         optimizer = tf.keras.optimizers.Adam(lr_sched)
@@ -88,8 +88,11 @@ class GraphImgModel(Model):
         return loss_log
 
 
-    def create( self, num_steps=50 ):
-        x = LeafImgCA.make_seed(self.target_size, n=1)
+    def create( self, x_initial = None, num_steps=50 ):
+
+        if x_initial is None:
+          x = LeafImgCA.make_seed(self.target_size, n=1)
+
         for _ in range(num_steps):
             x = self(x)
         return x
