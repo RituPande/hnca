@@ -64,7 +64,7 @@ class GraphImgModel(Model):
                 x = self(x)
             #overflow loss forces the model to output values within -1.0 and 1.0
             overflow_loss = tf.reduce_sum(tf.abs(x - tf.clip_by_value(x, -1.0, 1.0)))
-            loss = self.leaf_ca_loss(tf.identity(x)) + overflow_loss*1e3
+            loss = self.leaf_ca_loss(tf.identity(x)) + overflow_loss
 
         if use_pool :
           self.replay_buffer.add(x.numpy())
@@ -78,7 +78,7 @@ class GraphImgModel(Model):
     def train( self, lr=1e-3, num_epochs= 5000, use_pool=True, batch_size=4):
 
         lr_sched = tf.keras.optimizers.schedules.PiecewiseConstantDecay([1000,2000], [lr, lr*0.3, lr*0.3*0.3])
-        optimizer = tf.keras.optimizers.Adam(lr_sched)
+        optimizer = tf.keras.optimizers.Adam(lr_sched, epsilon=1e-08)
         loss_log = []
         for e in tqdm(range(num_epochs)):
             
