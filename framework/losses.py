@@ -51,7 +51,7 @@ class StyleLoss:
         G_true = tf.matmul(tf.transpose(y_true,perm=[0,2,1]),y_true)
         G_pred = tf.matmul(tf.transpose(y_pred, perm = [0,2,1]),y_pred)
 
-        loss = tf.reduce_sum(tf.square(G_true - G_pred))/(4.0 * (c ** 2) * ( size** 2))
+        loss = tf.reduce_mean(tf.square(G_true - G_pred))/(4.0 * (c ** 2) * ( size** 2))
 
         loss =  tf.cast(loss, dtype=tf.float32)
         return loss
