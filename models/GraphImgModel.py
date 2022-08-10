@@ -89,8 +89,9 @@ class GraphImgModel(Model):
 
 
     def create( self, x_initial = None, num_steps=50 ):
-
-        if x_initial is None:
+        x = x_initial
+        
+        if x is None:
           x = LeafImgCA.make_seed(self.target_size, n=1)
 
         for _ in range(num_steps):
