@@ -51,11 +51,13 @@ class LeafImgCA(Layer, ICellularAutomata):
 
         self.features =  Conv2D(filters=LeafImgCA.n_features,\
              kernel_size=1,\
+              bias_initializer='glorot_uniform',\
                 activation = 'relu') 
 
         self.new_state = Conv2D(filters=LeafImgCA.n_channels,\
             kernel_size=1,\
-                kernel_initializer=tf.keras.initializers.Zeros())
+                use_bias=False,\
+                  kernel_initializer=tf.keras.initializers.Zeros())
        
         self.split_rgb_latent = Lambda( lambda x : tf.split(x, [3, x.shape[-1]-3], axis=-1 ) )
         self.rgb_rescale = Activation('sigmoid')
@@ -74,12 +76,14 @@ class LeafImgCA(Layer, ICellularAutomata):
             LeafImgCA.n_features = LeafImgCA.n_channels*4 # exact channel count TBD
 
   
-    def call( self, x, training=None ):
-        
+    def call( self, x, training=None  ):
+        update_rate=0.5
+        b,h,w,c = x.shape
+        udpate_mask = tf.floor(tf.random.uniform(shape=(b,h,w,1) )+update_rate)
         y = self.perception(x)
         y = self.features(y)
         y = self.new_state(y)
-        y = y + x
+        y = y*udpate_mask + x
         
         return y
         
