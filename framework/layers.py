@@ -51,7 +51,7 @@ class LeafImgCA(Layer, ICellularAutomata):
 
         self.features =  Conv2D(filters=LeafImgCA.n_features,\
              kernel_size=1,\
-              bias_initializer='glorot_uniform',\
+              #bias_initializer='glorot_uniform',\
                 activation = 'relu') 
 
         self.new_state = Conv2D(filters=LeafImgCA.n_channels,\
