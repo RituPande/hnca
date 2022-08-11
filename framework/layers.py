@@ -51,12 +51,12 @@ class LeafImgCA(Layer, ICellularAutomata):
 
         self.features =  Conv2D(filters=LeafImgCA.n_features,\
              kernel_size=1,\
-              #bias_initializer='glorot_uniform',\
+              bias_initializer='glorot_uniform',\
                 activation = 'relu') 
 
         self.new_state = Conv2D(filters=LeafImgCA.n_channels,\
             kernel_size=1,\
-              #use_bias=False,\
+              use_bias=False,\
                 kernel_initializer=tf.keras.initializers.Zeros())
        
         self.split_rgb_latent = Lambda( lambda x : tf.split(x, [3, x.shape[-1]-3], axis=-1 ) )
