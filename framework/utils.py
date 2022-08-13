@@ -6,6 +6,9 @@ from collections import deque
 import random 
 from collections import deque
 import random 
+from scipy import ndimage
+from skimage.filters import threshold_otsu
+from skimage.color import rgb2gray
 
 class ReplayBuffer:
   def __init__(self, max_len=256 ):
@@ -51,3 +54,30 @@ def plot_loss(loss_log):
   plt.plot(loss_log,"o" , alpha=0.5)
   plt.show()
 
+def find_cells( img ):
+  img_gray = rgb2gray(img)
+    
+  # Mask out background and extract connected objects
+  thresh_val = threshold_otsu(img_gray)
+  mask = np.where(img_gray > thresh_val, 1, 0)
+  if np.sum(mask==0) < np.sum(mask==1):
+    mask = np.where(mask, 0, 1)    
+
+  labels, nlabels = ndimage.label(mask)
+   
+  # find connected objects.
+  for label_ind, label_coords in enumerate(ndimage.find_objects(labels)):
+    cell = img_gray[label_coords]
+    # Check if the label size is too small
+    if np.product(cell.shape) < 10: 
+      print('Label {} is too small! Setting to 0.'.format(label_ind))
+      mask = np.where(labels==label_ind+1, 0, mask)
+
+  # Regenerate the labels
+  labels, nlabels = ndimage.label(mask)
+  print('There are now {} separate components / objects detected.'.format(nlabels))
+  
+  # Get the object indices, and perform a binary opening procedure
+  two_cell_indices = ndimage.find_objects(labels)[1]
+  cell_mask = mask[two_cell_indices]
+  cell_mask_opened = ndimage.binary_opening(cell_mask, iterations=8)
