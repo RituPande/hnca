@@ -60,11 +60,9 @@ def find_cells( img ):
   # Mask out background and extract connected objects
   thresh_val = threshold_otsu(img_gray)
   mask = np.where(img_gray > thresh_val, 1, 0)
-  if np.sum(mask==0) < np.sum(mask==1):
-    mask = np.where(mask, 0, 1)    
-
+  
   labels, nlabels = ndimage.label(mask)
-   
+
   # find connected objects.
   for label_ind, label_coords in enumerate(ndimage.find_objects(labels)):
     cell = img_gray[label_coords]
@@ -73,11 +71,13 @@ def find_cells( img ):
       print('Label {} is too small! Setting to 0.'.format(label_ind))
       mask = np.where(labels==label_ind+1, 0, mask)
 
+  # create mask for each component 
+  cell_masks = []
+  for label_num in range(1, nlabels+1):
+    mask = np.where(labels == label_num, 1, 0)
+    cell_masks.append(mask)
+
   # Regenerate the labels
   labels, nlabels = ndimage.label(mask)
   print('There are now {} separate components / objects detected.'.format(nlabels))
-  
-  # Get the object indices, and perform a binary opening procedure
-  two_cell_indices = ndimage.find_objects(labels)[1]
-  cell_mask = mask[two_cell_indices]
-  cell_mask_opened = ndimage.binary_opening(cell_mask, iterations=8)
+    
