@@ -77,7 +77,7 @@ Generates unique colors to fill the circles.
 Input:
 num_colors: Number of unique colors to generate
 RetVal:
-List containing  'num_colors' tuples (r,g,b,a) where a is always 255
+List containing  'num_colors' tuples (r,g,b)
 
 """
 def get_unique_colors(num_colors):
@@ -86,8 +86,7 @@ def get_unique_colors(num_colors):
     while len(colors) < num_colors :
         r,g,b = random.sample (range(255), 3)
         if (r,g,b) not in colors:
-            #make the alpha channel opaque
-            colors.append((r,g,b,255))
+            colors.append((r,g,b))
     return colors
 
 """
@@ -101,12 +100,11 @@ None
 """
 
 
-def create_image(image_width = 224 ,image_height= 224, num_circles=10, num_colors = 2, min_radius=5, max_radius=10, save_img = False ):
+def create_image(image_width = 224 ,image_height= 224, num_circles=10, num_colors = 2, min_radius=5, max_radius=10, bg=0, save_img = True ):
 
-    img = np.full((image_height,image_width, 4),255, dtype=np.uint8 )
+    img = np.full((image_height,image_width, 3),bg , dtype=np.uint8 )
     # make alpha channel transparent.
-    img[...,3] = 0
-
+    
     circles = create_circles(image_width, image_height, num_circles, min_radius, max_radius)
     colors = get_unique_colors(num_colors)
     color_index = 0
@@ -118,7 +116,7 @@ def create_image(image_width = 224 ,image_height= 224, num_circles=10, num_color
         color_index += 1
         if color_index % num_colors == 0:
             color_index = 0
-
+    
     if save_img:
      cv2.imwrite('../img/target_img.png',img)
 
@@ -135,6 +133,7 @@ if __name__ == '__main__':
     parser.add_argument("-c", "--num_colors", help = "Enter number of different circle colors")
     parser.add_argument("-r", "--min_radius", help = "Enter minimum circle radius")
     parser.add_argument("-R", "--max_radius", help = "Enter maximum circle radius")
+    parser.add_argument("-b", "--background", help = "Enter background color of image (0/255)")
     parser.add_argument("-s", "--save_image", help = "Enter (y/n)")
 
     args = parser.parse_args()
@@ -145,8 +144,9 @@ if __name__ == '__main__':
     num_colors= int(args.num_colors) if args.num_colors else 2
     min_radius= int(args.min_radius) if args.min_radius else 5
     max_radius= int(args.max_radius) if args.max_radius else 10
-    save_image= True if args.save_image == "y" else False
+    background = int(args.background) if args.background else 0 
+    save_img= True if args.save_image=='y' else False
 
-    create_image(image_width,image_height,num_circles,num_colors,min_radius,max_radius,save_image)
+    create_image(image_width,image_height,num_circles,num_colors,min_radius,max_radius,background, save_img)
     
 
