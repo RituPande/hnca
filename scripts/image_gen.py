@@ -100,7 +100,7 @@ None
 """
 
 
-def create_image(image_width = 224 ,image_height= 224, num_circles=10, num_colors = 2, min_radius=5, max_radius=10, bg=0, save_img = True ):
+def create_image(image_width = 224 ,image_height= 224, num_circles=10, num_colors = 2, min_radius=5, max_radius=10, bg=52, save_img = True ):
 
     img = np.full((image_height,image_width, 3),bg , dtype=np.uint8 )
     # make alpha channel transparent.
