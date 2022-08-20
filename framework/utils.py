@@ -9,13 +9,16 @@ import random
 from scipy import ndimage
 from skimage.filters import threshold_otsu
 from skimage.color import rgb2gray
+import cv2
 
 
 class CellDetector:
 
-  def __init__(self, min_pixels, max_pixels):
+  def __init__(self, min_pixels=20, max_pixels=128*128,threshold_type='adaptive' ):
+    assert threshold_type=='adaptive' or threshold_type=='otsu','threshold_type not supported'
     self.min_pixels = min_pixels
     self.max_pixels = max_pixels
+    self.threshold_type = threshold_type
 
   def __call__(self, img ):
     img_mask = self._preprocess_img( img )
@@ -23,11 +26,22 @@ class CellDetector:
     return cell_masks, cell_members
 
 
-  def _preprocess_img(self, img):
-    img_gray = rgb2gray(img)
-    thresh_val = threshold_otsu(img_gray)
-    img_mask = np.where(img_gray > thresh_val, 1, 0)
+  def _preprocess_img(self, img ):
     
+    img_gray = rgb2gray(img)
+    img_gray = cv2.GaussianBlur(img_gray,(5,5),cv2.BORDER_DEFAULT)
+    if self.threshold_type=='otsu':
+      thresh_val = threshold_otsu(img_gray)
+    else:
+      img_gray = np.uint8(img_gray)
+      thresh_val = cv2.adaptiveThreshold(img_gray,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,25,-10)
+
+    img_mask = np.where(img_gray > thresh_val, 1, 0)
+
+    # background is larger than foreground
+    if np.sum(img_mask==0) < np.sum(img_mask==1):
+      img_mask = np.where(img_mask, 0, 1)
+
     labels, _ = ndimage.label(img_mask)
     # find connected objects.
     for label_ind, label_coords in enumerate(ndimage.find_objects(labels)):
