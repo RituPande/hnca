@@ -11,8 +11,24 @@ from skimage.filters import threshold_otsu
 from skimage.color import rgb2gray
 import cv2
 
-
+    
 class CellDetector:
+  """
+    This class detects cells, their member pixels and their centers in an RGB image.
+    To detect the cells, it converts RGB image to gray_scale, performs a guassian blur on it
+    and uses a cell segmentation algorithm 'otsu' or 'adaptive' to segment the image.
+    It returns, the masks of the detected cells, the pixel values of the cells and their centers.
+    Attributes
+    ----------
+    min_pixels : int
+        Minimum number of pixels constituting a cell
+    max_pixels: int
+        Minimum number of pixels constituting a cell
+    threshold_type : string
+        Algorithm to be used for cell segmentation. It can take value of otsu or adaptive.
+
+      
+  """
 
   def __init__(self, min_pixels=20, max_pixels=128*128,threshold_type='adaptive' ):
     assert threshold_type=='adaptive' or threshold_type=='otsu','threshold_type not supported'
