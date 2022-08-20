@@ -18,6 +18,7 @@ class CellDetector:
     To detect the cells, it converts RGB image to gray_scale, performs a guassian blur on it
     and uses a cell segmentation algorithm 'otsu' or 'adaptive' to segment the image.
     It returns, the masks of the detected cells, the pixel values of the cells and their centers.
+    
     Attributes
     ----------
     min_pixels : int
