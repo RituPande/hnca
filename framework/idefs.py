@@ -2,6 +2,7 @@
 from math import ceil
 from abc import ABC, abstractmethod
 from keras.layers import Layer
+import numpy as np
 
 
 class ICellularAutomata(ABC):
@@ -48,8 +49,7 @@ class ICellularAutomata(ABC):
         self._parent =  None
         self._child  = None
         self._level = 0
-        #self._cell_states = None
-        #self._parent_ca_cell_ids = None
+        self.signal ={}
         
  
     @property    
@@ -69,24 +69,18 @@ class ICellularAutomata(ABC):
     def level(self):
         return self._level
 
-    # @property
-    # def cell_states(self):
-    #     return self._cell_states
-
+    @level.setter
+    def level( self, l):
+        self._level = l
+        self.init_parent_signal();
+        
     
-    # @abstractmethod
-    # @cell_states.setter
-    # def cell_states( self, states):
-    #     pass
-
-    # @property
-    # def parent_ca_cell_ids(self):
-    #     return self._parent_ca_cell_ids   
-
-    # @abstractmethod
-    # @parent_ca_cell_ids.setter
-    # def parent_ca_cell_ids( self, ids):
-    #     pass
+    def init_parent_signal(self):
+        print('entered init_parent_signal')
+        assert self.level > 0, 'no parent to initialize signal'
+        max_signal_size = 10
+        sig = 'sig_'+str(self.level)
+        self.signal[sig] = np.zeros(max_signal_size * 1//self.level)
 
     def add_child_ca( self, ca):
         
@@ -94,8 +88,8 @@ class ICellularAutomata(ABC):
         self._child =  ca
 
         node = self
-        while node is not None:
-            node._child._level  = node._level + 1 
+        while node._child is not None :
+            node._child.level  = node.level + 1 
             node = node._child
 
         
@@ -107,9 +101,12 @@ class ICellularAutomata(ABC):
             # removing the child deletes the complete object hierarchy
             # below it. This is done for simplicity and can be enhanced in future 
             
-   # @abstractmethod
-    def process_signal(self, signal, parent_cell_id ):
+    def process_signal(self, level, signals, child_cell_ids ):
         pass
+
+    @abstractmethod
+    def step( self, x, n_steps, update_rate=0.5):
+        pass 
 
     # @abstractmethod
     def update_ca(self, make_recursive=False ):

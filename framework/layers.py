@@ -1,15 +1,19 @@
+
 from hnca.framework.idefs import ICellularAutomata
 
 import tensorflow as tf
 from tensorflow import keras
-from  keras.layers import Layer, Conv2D, DepthwiseConv2D, Activation, Concatenate, Lambda
-
-from  numpy import random
-
-
+from  keras.layers import Layer, Conv2D, DepthwiseConv2D
 import numpy as np
+from  hnca.framework.types import CellDetector, Graph
+from spektral.models import GeneralGNN
+from spektral.utils import sp_matrix_to_sp_tensor
 
-"""
+
+
+class LeafImgCA(Layer, ICellularAutomata):
+
+    """
     This is a derived class to create a leaf CA that learns rules to create a target image 
     
     Attributes
@@ -18,10 +22,8 @@ import numpy as np
     Methods
     -------
 
- """
+    """
 
-
-class LeafImgCA(Layer, ICellularAutomata):
 
     class PerceptionKernelInitializer(tf.keras.initializers.Initializer):
 
@@ -39,7 +41,11 @@ class LeafImgCA(Layer, ICellularAutomata):
 
         super().__init__()
 
+       
+
         LeafImgCA._init_static_vars()
+
+        self._init_ca_class_members()
 
         self.perception = DepthwiseConv2D(\
             kernel_size=3,\
@@ -58,12 +64,8 @@ class LeafImgCA(Layer, ICellularAutomata):
             kernel_size=1,\
               use_bias=False,\
                 kernel_initializer=tf.keras.initializers.Zeros())
-       
-        self.split_rgb_latent = Lambda( lambda x : tf.split(x, [3, x.shape[-1]-3], axis=-1 ) )
-        self.rgb_rescale = Activation('sigmoid')
-        self.y = Concatenate()
-       
-           
+   
+
     @staticmethod
     def _init_static_vars():
         if not hasattr(LeafImgCA, "n_channels"):
@@ -75,7 +77,18 @@ class LeafImgCA(Layer, ICellularAutomata):
         if not hasattr(LeafImgCA, "n_features"):
             LeafImgCA.n_features = LeafImgCA.n_channels*4 # exact channel count TBD
 
-  
+    def _init_ca_class_members(self):
+        self._parent =  None
+        self._child  = None
+        self._level = 0
+        self.signal ={}
+
+
+    def _circular_pad( self, x  ):
+      x = x.numpy()
+      x = np.pad(x,((0,0),(1,1),(1,1),(0,0)),mode='wrap')
+      return tf.convert_to_tensor(x)
+
     def call( self, x, update_rate=0.5  ):
         
         b,h,w,c = x.shape
@@ -86,15 +99,20 @@ class LeafImgCA(Layer, ICellularAutomata):
         y = y*udpate_mask + x
         
         return y
+
+    def step( self, x, n_steps, update_rate=0.5):
+
+        for _ in range(n_steps):
+            x = self(x, update_rate )
+        return x
+    
+    def process_signal(self, level, signal, parent_cell_id ):
+        pass
         
     @staticmethod
     def make_seed(size, n=1):
         x = np.zeros([n, size, size, LeafImgCA.n_channels ], np.float32)
         return x
-
-    def alive_masking(self, x):
-        pass
-
 
     
     #TODO
@@ -114,7 +132,7 @@ class LeafImgCA(Layer, ICellularAutomata):
 
 class LeafPreconfCA(ICellularAutomata):
     def __init__(self ):
-        super().__init__(self)
+        super().__init__()
     
     def call( self, training=None ):
         pass
@@ -135,16 +153,54 @@ class LeafPreconfCA(ICellularAutomata):
     -------
 
  """    
-class HCA(ICellularAutomata):
-    def __init__(self):
-       super().__init__(self )
-       if not hasattr(HCA, "n_channels"):
-            HCA.n_channels = 10 # exact channel count TBD
+class HCA(Layer,ICellularAutomata):
+    def __init__(self, x ):
+        super().__init__()
+        self._init_ca_class_members()
 
+        self.detector = CellDetector()
+        self.graph = None
+        self.gnca = None
+        self.node_members = None
+    
+    def _init_ca_class_members(self):
+        self._parent =  None
+        self._child  = None
+        self._level = 0
+        self.signal ={}
+       
+    def build(self):
+
+        # TODO: check if default values for other parameters are ok for our needs.
+        input_shape =self.graph.node_features.shape
+
+        self.gnca = GeneralGNN(\
+            input_shape[0][-1],\
+            activation='relu',\
+            message_passing=1,\
+            pool=None,\
+            batch_norm=False )
+            
+    def update_ca(self, x, make_recursive=False):
+
+        _, node_details = self.detector(x)
+        node_features = []
+        for cell in node_details:
+            node_features.append(cell['center'])
+
+        self.graph =  Graph(node_features)
+        self.node_members = node_details['members']
+        
+    
     def call( self ):
-        # TODO
-        pass
+        x = self.graph.node_features
+        a = sp_matrix_to_sp_tensor(self.graph.spA)
+        x = self.gnca([x,a])
+        self.child.update_signal(x,self.node_members )
+        return x
 
+    def step( self, x, n_steps, update_rate=0.5):
+        pass
     
     #TODO
     #Implement the abstract methods of the base class
