@@ -49,7 +49,7 @@ class LeafImgCA(Layer, ICellularAutomata):
 
         self.perception = DepthwiseConv2D(\
             kernel_size=3,\
-                padding='same',\
+                padding='valid',\
                     depth_multiplier= 4,\
                          depthwise_initializer= LeafImgCA.PerceptionKernelInitializer())
 
@@ -84,16 +84,17 @@ class LeafImgCA(Layer, ICellularAutomata):
         self.signal ={}
 
 
-    def _circular_pad( self, x  ):
-      x = x.numpy()
-      x = np.pad(x,((0,0),(1,1),(1,1),(0,0)),mode='wrap')
-      return tf.convert_to_tensor(x)
+    def _circular_pad( self, x, pad  ):
+        x = tf.concat([x[:, -pad:], x, x[:, :pad]], axis=1)
+        x = tf.concat([x[:, :, -pad:], x, x[:, :, :pad]], axis=2)
+        return x
 
     def call( self, x, update_rate=0.5  ):
         
         b,h,w,c = x.shape
         udpate_mask = tf.floor(tf.random.uniform(shape=(b,h,w,1) )+update_rate)
-        y = self.perception(x)
+        x_pad = self._circular_pad(x,1)
+        y = self.perception(x_pad)
         y = self.features(y)
         y = self.new_state(y)
         y = y*udpate_mask + x
