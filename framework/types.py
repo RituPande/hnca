@@ -47,7 +47,7 @@ class CellDetector:
       thresh_val = threshold_otsu(img_gray)
     else:
       img_gray = np.uint8(img_gray)
-      thresh_val = cv2.adaptiveThreshold(img_gray,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,25,-10)
+      thresh_val = cv2.adaptiveThreshold(img_gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,41 , -5)
 
     img_mask = np.where(img_gray > thresh_val, 1, 0)
 
