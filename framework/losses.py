@@ -3,6 +3,7 @@ import numpy as np
 from keras.applications.vgg16 import VGG16, preprocess_input
 from hnca.framework.utils import to_rgb
 
+
 class StyleLoss:
     def __init__(self, target_img, loss_type):
         self.target_img = target_img
@@ -76,7 +77,33 @@ class MSELoss:
 
     def __call__( self, x ):
         img = to_rgb(x)*255.0
-        
         loss =  tf.reduce_mean(tf.square(self.target_img - img))
-
         return loss
+
+
+class OTLoss:
+    def __init__(self, n_directions=32):
+        self.n_directions =  n_directions
+    
+    def __call__( self, y_true, y_pred ):
+        n_true, n_features = y_true.shape
+        n_pred, _ = y_pred.shape
+        p_vecs,_ = tf.linalg.normalize(tf.random.normal( shape=(n_features, self.n_directions ) ), axis = 0 )  # create  n_directions unit vectors with c dimensions
+        proj_true = tf.einsum('nf,fp->np', y_true, p_vecs)
+        proj_true = tf.sort(proj_true) # sort on axis = -1
+        proj_pred = tf.einsum('nf,fp->np', y_pred, p_vecs)
+        proj_pred = tf.sort(proj_pred)
+        proj_true = self._resize_1d(proj_true, n_pred) # perform linear interpolation
+        loss = tf.reduce_mean(tf.square(proj_true - proj_pred )) # loss for each pixel in each direction and take their mean
+        loss = tf.cast(loss, dtype=tf.float32 ) # take mean of loss across all directions 
+        return loss
+
+    def _resize_1d( self, a, n_pred):
+        n_true =  a.shape[0]
+        idx = tf.cast( tf.linspace(0, n_true-1, n_pred ) + 0.5, dtype=tf.int32 )
+        return tf.gather(a, idx)
+
+
+
+    
+    
