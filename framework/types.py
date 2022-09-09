@@ -7,6 +7,7 @@ from skimage.color import rgb2gray
 import cv2
 import numpy as np
 import scipy
+from sklearn.neighbors import kneighbors_graph
 
 class CellDetector:
   """
@@ -109,33 +110,20 @@ class ReplayBuffer:
     return mini_batch
 
 class Graph:
-    def __init__(self, node_features, k=3, normalize=False):
+    def __init__(self, x, k=5 ):
 
-        x = map(np.array, node_features)
-        x = np.array(list(x))
+        if isinstance(x, list):
+          x = map(np.array, x)
+          x = np.array(list(x))
+
         self.node_features = x
-        self.n_nodes = len(node_features)
-        self.n_edges = None
-        self.A, self.spA = self._prepare_adjacency_matrix( k, normalize )
-        
-    def _prepare_adjacency_matrix(self, k, normalize):
-        dist = np.zeros((self.n_nodes,self.n_nodes))
-        A = np.zeros((self.n_nodes,self.n_nodes))
+        self.n_nodes = x.shape[0]
+        self.spA = kneighbors_graph(\
+                        self.node_features,\
+                          n_neighbors=k,\
+                            mode='connectivity',\
+                              include_self=False) 
+      
+      
 
-        for i in range(self.n_nodes):
-            for j in range( i+1, self.n_nodes):
-                dist[i,j] = np.linalg.norm(self.node_features[i]- self.node_features[j] )
-                dist[j,i] = dist[i,j]
-
-        nn =  np.argsort(dist)
-        for i in range(self.n_nodes):
-            for j in range(k+1):
-                neighbor = nn[i,j]
-                A[i,neighbor] = 1
-
-        # normalize adjacency matrix
-        if normalize:
-            deg = np.sum(A, axis=-1)
-            A = A/deg
-
-        return A, scipy.sparse.csr_matrix(A)
+   
