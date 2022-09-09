@@ -72,12 +72,10 @@ class StyleLoss:
 
 
 class MSELoss:
-    def __init__( self, target_img):
-        self.target_img = tf.convert_to_tensor(target_img, dtype=tf.float32) 
-
-    def __call__( self, x ):
-        img = to_rgb(x)*255.0
-        loss =  tf.reduce_mean(tf.square(self.target_img - img))
+            
+    def __call__( self, target, x, is_image=False ):
+        pred = to_rgb(x)*255.0 if is_image else x
+        loss =  tf.reduce_mean(tf.square(target - pred))
         return loss
 
 
