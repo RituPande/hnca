@@ -155,7 +155,8 @@ class LeafPreconfCA(ICellularAutomata):
 
  """    
 class HCA(Layer,ICellularAutomata):
-    def __init__(self, x ):
+
+    def __init__(self ):
         super().__init__()
         self._init_ca_class_members()
 
@@ -170,34 +171,46 @@ class HCA(Layer,ICellularAutomata):
         self._level = 0
         self.signal ={}
        
-    def build(self):
+    def build(self, input_shapes):
 
-        # TODO: check if default values for other parameters are ok for our needs.
         input_shape =self.graph.node_features.shape
+        n_f = input_shape[-1]
 
         self.gnca = GeneralGNN(\
-            input_shape[0][-1],\
-            activation='relu',\
-            message_passing=1,\
-            pool=None,\
-            batch_norm=False )
+            n_f,\
+                hidden = 1024,\
+                    activation=None,\
+                        hidden_activation='tanh',\
+                            message_passing=1,\
+                                post_process=1,\
+                                    pool=None,\
+                                        connectivity='cat',\
+                                            aggregate='sum',\
+                                                batch_norm=False)
             
-    def update_ca(self, x, make_recursive=False):
+    def update_ca(self, x=None, make_recursive=False, recalculate_graph=True ):
 
-        _, node_details = self.detector(x)
-        node_features = []
-        for cell in node_details:
-            node_features.append(cell['center'])
+        if x is None:
+            _, node_details = self.detector(x)
+            node_features = [cell['center'] for cell in node_details]
+            self.node_members = node_details['members']
+        else:
+            node_features = x
 
-        self.graph =  Graph(node_features)
-        self.node_members = node_details['members']
+        if recalculate_graph or not self.graph:
+            self.graph=Graph(node_features) 
+        else:
+            self.graph.node_features = node_features
+        
+        
         
     
-    def call( self ):
+    def call( self,x = None ):
         x = self.graph.node_features
         a = sp_matrix_to_sp_tensor(self.graph.spA)
         x = self.gnca([x,a])
-        self.child.update_signal(x,self.node_members )
+        x = tf.keras.activations.softplus(x)
+        #self.child.update_signal(x,self.node_members )
         return x
 
     def step( self, x, n_steps, update_rate=0.5):
