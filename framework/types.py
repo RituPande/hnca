@@ -7,7 +7,7 @@ from skimage.color import rgb2gray
 import cv2
 import numpy as np
 import scipy
-from sklearn.neighbors import kneighbors_graph
+from sklearn.neighbors import kneighbors_graph, radius_neighbors_graph
 
 class CellDetector:
   """
@@ -98,7 +98,7 @@ class CellDetector:
 
     
 class ReplayBuffer:
-  def __init__(self, max_len=256 ):
+  def __init__(self, max_len=256):
     self.buffer = deque(maxlen=max_len) 
 
   def add(self, x ) :
@@ -110,20 +110,27 @@ class ReplayBuffer:
     return mini_batch
 
 class Graph:
-    def __init__(self, x, k=5 ):
-
+    def __init__(self, x, mode='number', k=8, radius=5  ):
+        assert mode=='number' or mode=='radius'
         if isinstance(x, list):
           x = map(np.array, x)
           x = np.array(list(x))
 
+        
         self.node_features = x
         self.n_nodes = x.shape[0]
-        self.spA = kneighbors_graph(\
-                        self.node_features,\
-                          n_neighbors=k,\
-                            mode='connectivity',\
-                              include_self=False) 
-      
+        if mode=='number':
+          self.spA = kneighbors_graph(\
+                          self.node_features,\
+                            n_neighbors=k,\
+                              mode='connectivity',\
+                                include_self=False) 
+        elif mode=='radius':
+          self.spA = radius_neighbors_graph(\
+                      self.node_features,\
+                        radius=radius,\
+                          mode='connectivity',\
+                            include_self=False )
       
 
    
