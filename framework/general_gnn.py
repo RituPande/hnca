@@ -96,7 +96,10 @@ class GeneralGNN(Model):
         bias_initializer='zeros',
         final_kernel_initializer='glorot_uniform',
         final_bias_initializer='zeros',
-
+        kernel_regularizer=None,
+        bias_regularizer=None,
+        activity_regularizer=None,
+        
     ):
         super().__init__()
         self.config = {
@@ -115,8 +118,11 @@ class GeneralGNN(Model):
             "kernel_initializer": kernel_initializer,
             "bias_initializer": bias_initializer,
             "final_kernel_initializer": final_kernel_initializer,
-            "final_bias_initializer": final_bias_initializer
-
+            "final_bias_initializer": final_bias_initializer,
+            "kernel_regularizer":kernel_regularizer,
+            "bias_regularizer":bias_regularizer,
+            "activity_regularizer":activity_regularizer
+            
         }
 
         # Connectivity function
@@ -147,11 +153,24 @@ class GeneralGNN(Model):
             kernel_initializer,
             bias_initializer,
             kernel_initializer,
-            bias_initializer            
+            bias_initializer,
+            kernel_regularizer,
+            bias_regularizer,
+            activity_regularizer,
+            kernel_regularizer,
+            bias_regularizer,
+            activity_regularizer
         )
 
         self.gnn = [
-            GeneralConv(hidden, batch_norm, dropout, aggregate, hidden_activation)
+            GeneralConv(hidden, batch_norm, dropout, aggregate, hidden_activation,\
+                 kernel_initializer=kernel_initializer,
+                 bias_initializer=bias_initializer,
+                 kernel_regularizer=kernel_regularizer,
+                 bias_regularizer=bias_initializer,
+                 activity_regularizer=activity_regularizer
+
+                  )
             for _ in range(message_passing)
         ]
         self.post = MLP(
@@ -165,7 +184,11 @@ class GeneralGNN(Model):
             kernel_initializer,
             bias_initializer,
             final_kernel_initializer,
-            final_bias_initializer 
+            final_bias_initializer,
+            kernel_regularizer,
+            bias_regularizer,
+            activity_regularizer
+                       
         )
 
     def call(self, inputs):
@@ -212,7 +235,11 @@ class MLP(Model):
         kernel_initializer='glorot_uniform',
         bias_initializer='zeros',
         final_kernel_initializer='glorot_uniform',
-        final_bias_initializer='zeros'
+        final_bias_initializer='zeros',
+        kernel_regularizer=None,
+        bias_regularizer=None,
+        activity_regularizer=None
+       
     ):
         super().__init__()
         self.config = {
@@ -226,7 +253,11 @@ class MLP(Model):
             "kernel_initializer": kernel_initializer,
             "bias_initializer": bias_initializer,
             "final_kernel_initializer": final_kernel_initializer,
-            "final_bias_initializer": final_bias_initializer
+            "final_bias_initializer": final_bias_initializer,
+            "kernel_regularizer":kernel_regularizer,
+            "bias_regularizer":bias_regularizer,
+            "activity_regularizer":activity_regularizer,
+           
 
         }
         self.batch_norm = batch_norm
@@ -238,7 +269,12 @@ class MLP(Model):
             units= hidden if i < layers - 1 else output
             k_init = kernel_initializer if i < layers-1 else final_kernel_initializer
             b_init = bias_initializer if i < layers-1 else final_bias_initializer
-            self.mlp.add(Dense(units=units,kernel_initializer=k_init, bias_initializer=b_init ))
+            self.mlp.add(Dense(units=units,\
+                        kernel_initializer=k_init,\
+                             bias_initializer=b_init,\
+                                kernel_regularizer=kernel_regularizer,\
+                                     bias_regularizer=bias_regularizer,\
+                                        activity_regularizer=activity_regularizer   ))
             # Batch norm
             if self.batch_norm:
                 self.mlp.add(BatchNormalization())
