@@ -285,7 +285,7 @@ class MLP(Model):
             units= hidden if i < layers - 1 else output
             k_init = kernel_initializer if i < layers-1 else final_kernel_regularizer
             b_init = bias_initializer if i < layers-1 else final_bias_initializer
-            k_regularizer = kernel_regularizer if i < layers-1 else final_kernel_initializer
+            k_regularizer = kernel_regularizer if i < layers-1 else final_kernel_regularizer
             b_regularizer = bias_regularizer if i < layers-1 else final_bias_regularizer
             a_regularizer = activity_regularizer if i < layers-1 else final_activity_regularizer
 
