@@ -283,7 +283,7 @@ class MLP(Model):
         for i in range(layers):
             # Linear
             units= hidden if i < layers - 1 else output
-            k_init = kernel_initializer if i < layers-1 else final_kernel_regularizer
+            k_init = kernel_initializer if i < layers-1 else final_kernel_initializer
             b_init = bias_initializer if i < layers-1 else final_bias_initializer
             k_regularizer = kernel_regularizer if i < layers-1 else final_kernel_regularizer
             b_regularizer = bias_regularizer if i < layers-1 else final_bias_regularizer
