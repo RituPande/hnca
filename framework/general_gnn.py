@@ -99,6 +99,9 @@ class GeneralGNN(Model):
         kernel_regularizer=None,
         bias_regularizer=None,
         activity_regularizer=None,
+        final_kernel_regularizer=None,
+        final_bias_regularizer=None,
+        final_activity_regularizer=None
         
     ):
         super().__init__()
@@ -121,7 +124,10 @@ class GeneralGNN(Model):
             "final_bias_initializer": final_bias_initializer,
             "kernel_regularizer":kernel_regularizer,
             "bias_regularizer":bias_regularizer,
-            "activity_regularizer":activity_regularizer
+            "activity_regularizer":activity_regularizer,
+            "final_kernel_regularizer":final_kernel_regularizer,
+            "final_bias_regularizer":final_bias_regularizer,
+            "final_activity_regularizer":final_activity_regularizer
             
         }
 
@@ -187,7 +193,10 @@ class GeneralGNN(Model):
             final_bias_initializer,
             kernel_regularizer,
             bias_regularizer,
-            activity_regularizer
+            activity_regularizer,
+            final_kernel_regularizer,
+            final_bias_regularizer,
+            final_activity_regularizer,
                        
         )
 
@@ -238,7 +247,11 @@ class MLP(Model):
         final_bias_initializer='zeros',
         kernel_regularizer=None,
         bias_regularizer=None,
-        activity_regularizer=None
+        activity_regularizer=None,
+        final_kernel_regularizer=None,
+        final_bias_regularizer=None,
+        final_activity_regularizer=None
+
        
     ):
         super().__init__()
@@ -257,6 +270,9 @@ class MLP(Model):
             "kernel_regularizer":kernel_regularizer,
             "bias_regularizer":bias_regularizer,
             "activity_regularizer":activity_regularizer,
+            "final_kernel_regularizer":final_kernel_regularizer,
+            "final_bias_regularizer":final_bias_regularizer,
+            "final_activity_regularizer":final_activity_regularizer
            
 
         }
@@ -267,14 +283,18 @@ class MLP(Model):
         for i in range(layers):
             # Linear
             units= hidden if i < layers - 1 else output
-            k_init = kernel_initializer if i < layers-1 else final_kernel_initializer
+            k_init = kernel_initializer if i < layers-1 else final_kernel_regularizer
             b_init = bias_initializer if i < layers-1 else final_bias_initializer
+            k_regularizer = kernel_regularizer if i < layers-1 else final_kernel_initializer
+            b_regularizer = bias_regularizer if i < layers-1 else final_bias_regularizer
+            a_regularizer = activity_regularizer if i < layers-1 else final_activity_regularizer
+
             self.mlp.add(Dense(units=units,\
                         kernel_initializer=k_init,\
                              bias_initializer=b_init,\
-                                kernel_regularizer=kernel_regularizer,\
-                                     bias_regularizer=bias_regularizer,\
-                                        activity_regularizer=activity_regularizer   ))
+                                kernel_regularizer=k_regularizer,\
+                                     bias_regularizer=b_regularizer,\
+                                        activity_regularizer=a_regularizer ))
             # Batch norm
             if self.batch_norm:
                 self.mlp.add(BatchNormalization())
