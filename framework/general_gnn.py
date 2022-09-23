@@ -173,7 +173,7 @@ class GeneralGNN(Model):
                  kernel_initializer=kernel_initializer,
                  bias_initializer=bias_initializer,
                  kernel_regularizer=kernel_regularizer,
-                 bias_regularizer=bias_initializer,
+                 bias_regularizer=bias_regularizer,
                  activity_regularizer=activity_regularizer
 
                   )
