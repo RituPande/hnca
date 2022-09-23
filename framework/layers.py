@@ -6,7 +6,7 @@ from tensorflow import keras
 from  keras.layers import Layer, Conv2D, DepthwiseConv2D
 import numpy as np
 from  hnca.framework.types import CellDetector, Graph
-from spektral.models import GeneralGNN
+from hnca.framework.general_gnn import GeneralGNN
 from spektral.utils import sp_matrix_to_sp_tensor
 
 
@@ -178,15 +178,18 @@ class HCA(Layer,ICellularAutomata):
 
         self.gnca = GeneralGNN(\
             n_f,\
-                hidden = 1024,\
+                hidden = 256,\
                     activation=None,\
-                        hidden_activation='tanh',\
+                        hidden_activation='relu',\
                             message_passing=1,\
                                 post_process=1,\
                                     pool=None,\
                                         connectivity='cat',\
                                             aggregate='sum',\
-                                                batch_norm=False)
+                                                batch_norm=False
+                                                    #final_kernel_initializer='zeros' 
+                                                        #final_bias_initializer='glorot_uniform'
+                                                     )
             
     def update_ca(self, x=None, make_recursive=False, recalculate_graph=True ):
 
