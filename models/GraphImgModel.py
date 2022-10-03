@@ -49,7 +49,7 @@ class GraphImgModel(Model):
         x = self.ca_leaf(x)
         return x
 
-   # dont enable use_pool option as its implementation is not stable yet 
+  
     def _train_step( self, optimizer, curr_epoch, use_pool, batch_size=1):
 
         if use_pool:

@@ -12,6 +12,7 @@ import numpy as np
 import random
 from math import dist
 import argparse 
+from skimage.measure import block_reduce
 
 """
 Description:
@@ -53,8 +54,57 @@ RetVal:
 List containing  'num_circle' tuples (x,y,r)
 
 """
+def gen_circle(img_height, img_width, n, r=None ):
 
-def create_circles(image_width, image_height, num_circles, min_radius, max_radius):
+    assert img_height and img_width > 20 and n %2 == 0
+
+    center_y = img_height//2
+    center_x = img_width//2
+
+    if r is None: r = min(center_y, center_x) - 5
+
+    theta = (2*np.pi)/n
+
+    y = center_y
+    x = center_x + r
+
+    points = np.zeros((n,2))
+    points[0,0] = y
+    points[0,1] = x
+
+    for i in range(1,n):
+        y = center_y + r* np.sin(theta*i)
+        x = center_x + r* np.cos(theta*i)
+        points[i,0]=int(round(y))
+        points[i,1]=int(round(x))
+    
+    return points
+
+def gen_circles_in_quad(img_height, img_width, n ):
+    points_1 = gen_circle(img_height/2, img_width/2, n//4 )
+    points_2 = gen_circle(img_height/2, img_width/2, n//4 )
+    points_2[:,1] += img_width/2
+    points_3 = gen_circle(img_height/2, img_width/2, n//4 )
+    points_3[:,0] += img_height/2
+    points_4 = gen_circle(img_height/2, img_width/2, n//4 )
+    points_4[:,1] += img_width/2
+    points_4[:,0] += img_height/2
+
+    points =  np.vstack( (points_1, points_2, points_3, points_4))
+    return points
+    
+
+def  gen_concentric_circle(image_height, image_width, num_points, r=None):
+
+    points_1 = gen_circle(image_height, image_width, num_points//4, 10 )
+    points_2 = gen_circle(image_height, image_width, num_points//4, 20 )
+    points_3 = gen_circle(image_height, image_width, num_points//4, 40 )
+    points_4 = gen_circle(image_height, image_width, num_points//4, 60 )
+    points =  np.vstack( (points_1, points_2, points_3,points_4 ))
+    return points
+
+
+def create_random_circles(image_width, image_height, num_circles, min_radius, max_radius):
 
     #initiatlize an image with white background
 
@@ -89,6 +139,22 @@ def get_unique_colors(num_colors):
             colors.append((r,g,b))
     return colors
 
+def fillCircles( img, circles, colors, target_points):
+    
+    color_index = 0
+    circle_index = 0
+    for c in circles:
+        x,y,r = c
+        if target_points is not None:
+            y = int(target_points[circle_index][0])
+            x = int(target_points[circle_index][1])
+        cv2.circle(img, (x,y) , r, colors[color_index], cv2.FILLED)
+        color_index += 1
+        if color_index % num_colors == 0:
+            color_index = 0
+        circle_index += 1
+    return img
+
 """
 Description:
 This is the main function that draws the image and saves it in a file, if requested.
@@ -100,28 +166,35 @@ None
 """
 
 
-def create_image(image_width = 224 ,image_height= 224, num_circles=10, num_colors = 2, min_radius=5, max_radius=10, bg=52, save_img = True ):
+def create_image(image_width = 224 ,image_height= 224, num_circles=10, num_colors = 2, min_radius=5, max_radius=10, bg=52, save_img = True, target_points=None ):
 
+    # generate leaf CA target image
     img = np.full((image_height,image_width, 3),bg , dtype=np.uint8 )
-    # make alpha channel transparent.
-    
-    circles = create_circles(image_width, image_height, num_circles, min_radius, max_radius)
+    circles = create_random_circles(image_width, image_height, num_circles, min_radius, max_radius)
     colors = get_unique_colors(num_colors)
-    color_index = 0
-
-   
-    for c in circles:
-        x,y,r = c
-        cv2.circle(img, (x,y) , r, colors[color_index], cv2.FILLED)
-        color_index += 1
-        if color_index % num_colors == 0:
-            color_index = 0
-    
-    if save_img:
-     cv2.imwrite('../img/target_img.png',img)
-
+    img = fillCircles(img, circles, colors, None)
     cv2.imshow('image', img)
     cv2.waitKey(0)
+    if save_img:
+        cv2.imwrite('../img/leaf_ca_target_img.png',img)
+
+    # generate HCA target image
+    img = np.full((image_height,image_width, 3),bg , dtype=np.uint8 )
+    img = fillCircles(img, circles, colors, target_points)
+    cv2.imshow('image', img)
+    cv2.waitKey(0)
+    if save_img:
+        cv2.imwrite('../img/hca_target_img.png',img)
+
+    # generate leaf CA feedback
+    img = block_reduce(img,(2,2,1), func=np.mean)
+    img = block_reduce(img,(2,2,1), func=np.mean)
+    print(img.shape)
+    cv2.imshow('image', img)
+    cv2.waitKey(0)
+    if save_img:
+        cv2.imwrite('../img/hca_pooled_img.png',img)
+
     cv2.destroyAllWindows()
 
 
@@ -135,18 +208,32 @@ if __name__ == '__main__':
     parser.add_argument("-R", "--max_radius", help = "Enter maximum circle radius")
     parser.add_argument("-b", "--background", help = "Enter background color of image (0/255)")
     parser.add_argument("-s", "--save_image", help = "Enter (y/n)")
+    parser.add_argument("-t", "--target", help ="1- Single 2- Concentric, 3- Circles in quadrants")
+    
 
     args = parser.parse_args()
 
-    image_width= int(args.image_width) if args.image_width else 224
-    image_height= int(args.image_height) if args.image_height else 224
+    image_width= int(args.image_width) if args.image_width else 128
+    image_height= int(args.image_height) if args.image_height else 128
     num_circles= int( args.num_circles) if args.num_circles else 10
     num_colors= int(args.num_colors) if args.num_colors else 2
     min_radius= int(args.min_radius) if args.min_radius else 5
     max_radius= int(args.max_radius) if args.max_radius else 10
     background = int(args.background) if args.background else 0 
+    target = int(args.target) if args.target else 1 
+
     save_img= True if args.save_image=='y' else False
 
-    create_image(image_width,image_height,num_circles,num_colors,min_radius,max_radius,background, save_img)
+    points = None
+    if target == 1:
+        points = gen_circle(image_height, image_width, num_circles )    
+    elif target==2:
+        points = gen_concentric_circle( image_height, image_width, num_circles )
+    elif target == 3:
+        points = gen_circles_in_quad(image_height, image_width, num_circles )
+    else:
+        print("Incorrect target input")
+
+    create_image(image_width,image_height,num_circles,num_colors,min_radius,max_radius,background, save_img, points)
     
 
