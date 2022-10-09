@@ -13,6 +13,8 @@ import random
 from math import dist
 import argparse 
 from skimage.measure import block_reduce
+import tensorflow as tf
+from keras.layers import AveragePooling2D
 
 """
 Description:
@@ -134,7 +136,7 @@ def get_unique_colors(num_colors):
 
     colors = [] 
     while len(colors) < num_colors :
-        r,g,b = random.sample (range(255), 3)
+        r,g,b = random.sample (range(0,255), 3)
         if (r,g,b) not in colors:
             colors.append((r,g,b))
     return colors
@@ -187,9 +189,12 @@ def create_image(image_width = 224 ,image_height= 224, num_circles=10, num_color
         cv2.imwrite('../img/hca_target_img.png',img)
 
     # generate leaf CA feedback
-    img = block_reduce(img,(2,2,1), func=np.mean)
-    img = block_reduce(img,(2,2,1), func=np.mean)
+    img = img[None,...]
+    img = AveragePooling2D(pool_size=(4,4) )(tf.cast(img, dtype=tf.float32)) 
+    #img = block_reduce(img,(2,2,1), func=np.mean)
+    #img = block_reduce(img,(2,2,1), func=np.mean)
     print(img.shape)
+    img = np.squeeze(img.numpy())
     cv2.imshow('image', img)
     cv2.waitKey(0)
     if save_img:
