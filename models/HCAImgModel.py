@@ -32,17 +32,17 @@ class HCAImgModel(Model):
 
         super(HCAImgModel,self).__init__()
 
-        self._init_ca_class_members(self,leaf_ca_target,parent_ca_target,\
+        self._init_ca_class_members(leaf_ca_target,parent_ca_target,\
                       leaf_ca_min_steps, leaf_ca_max_steps,  parent_ca_min_steps, parent_ca_max_steps)
 
         self._init_loss_objects(leaf_ca_loss_type, parent_ca_loss_type )
 
-        self._init_ca_layers()
+        self._init_fs_layers()
         
         
 
                       
-    def _init_ca_class_members(self,leaf_ca_target,parent_ca_target,\
+    def _init_ca_class_members(self, leaf_ca_target,parent_ca_target,\
                       leaf_ca_min_steps, leaf_ca_max_steps, parent_ca_min_steps, parent_ca_max_steps):
                             
 
@@ -59,13 +59,13 @@ class HCAImgModel(Model):
         self.parent_ca_target_img = load_image(parent_ca_target)[None,:,:,:3]
 
         self.leaf_replay_buffer = ReplayBuffer()
-        self.leaf_replay_buffer.add( self.ca_leaf.make_seed(size=self.leaf_img_target_size, n=256))
+        self.leaf_replay_buffer.add( self.leaf_ca_model.make_seed(size=self.leaf_img_target_size, n=256))
 
 
     def _init_loss_objects(self, leaf_ca_loss_type, parent_ca_loss_type ):
 
         if leaf_ca_loss_type in ['gram','ot']:
-            self.leaf_ca_loss = StyleLoss( np.copy(self.target_img), leaf_ca_loss_type )
+            self.leaf_ca_loss = StyleLoss( np.copy(self.leaf_ca_target_img), leaf_ca_loss_type )
         elif leaf_ca_loss_type == 'mse':
             self.leaf_ca_loss = MSELoss()
         else :
@@ -79,7 +79,7 @@ class HCAImgModel(Model):
             print("Parent CA Loss type not supported")
 
 
-    def _init_ca_layers( self  ):
+    def _init_fs_layers( self  ):
 
         self.signal_creator =  Conv2D(filters=4,\
                                         kernel_size=1,\
@@ -89,8 +89,8 @@ class HCAImgModel(Model):
         self.feedback = AveragePooling2D(pool_size=(self.signaling_factor,self.signaling_factor), strides= self.signaling_factor )
         self.upscale_signal = UpSampling2D(size=(self.signaling_factor,self.signaling_factor))
 
-        initializer = tf.random_uniform_initializer(shape=[1], minval=-1.0 , maxval=1.0, type=tf.float32)
-        self.signal_lr = tf.Variable(initializer, trainable=True)
+        initializer = tf.random_uniform_initializer(minval=-1.0 , maxval=1.0,  )
+        self.signal_lr = tf.Variable( initializer(shape=[1], dtype=tf.float32),  trainable=True)
 
 
     def _get_signal(self, x  ):
@@ -106,7 +106,7 @@ class HCAImgModel(Model):
 
         step_n = np.random.randint(self.leaf_ca_min_steps, self.leaf_ca_max_steps)
         if parent_x is None:
-            leaf_x, s = tf.split(leaf_x, [self.leaf_ca_model.n_channels, -1])
+            leaf_x, s = tf.split(leaf_x, [self.leaf_ca_model.n_channels, -1], axis=-1)
             leaf_x = tf.stop_gradient(self.leaf_ca_model.step(leaf_x,s,n_steps=step_n, training_type='hca'))
             parent_x = self.feedback(leaf_x)
             parent_x = self.parent_ca_model.step(parent_x,s=None,n_steps=1,training_type='hca')
@@ -149,13 +149,13 @@ class HCAImgModel(Model):
     def _loss_step_leaf_ca(self, curr_epoch, use_pool, batch_size):
 
         if use_pool:
-            x = self.replay_buffer.sample_batch(batch_size)
+            x = self.leaf_replay_buffer.sample_batch(batch_size)
             if curr_epoch % 8 == 0:
               x[:1]= self.leaf_ca_model.make_seed(self.leaf_img_target_size)
         else:
             x = self.leaf_ca_model.make_seed(self.leaf_img_target_size)
 
-        x,s = tf.split(x,[self.leaf_ca_model.n_channels,-1])
+        x,s = tf.split(x,[self.leaf_ca_model.n_channels,-1], axis=-1)
         step_n = np.random.randint(self.leaf_ca_min_steps, self.leaf_ca_max_steps)
         with tf.GradientTape() as t:
             x = self.leaf_ca_model.step(x, s, n_steps=step_n, training_type='leaf')
@@ -213,7 +213,7 @@ class HCAImgModel(Model):
         x = x_initial
         
         if x is None:
-          leaf_x = self.leaf_ca_model.make_seed(self.target_size, n=1)
+          leaf_x = self.leaf_ca_model.make_seed(self.leaf_img_target_size, n=1)
          
         leaf_x, parent_x = self(leaf_x,None)
         for _ in tf.range(num_steps-1):

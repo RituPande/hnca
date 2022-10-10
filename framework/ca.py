@@ -22,6 +22,10 @@ class ImgCA(Model):
 
     class PerceptionKernelInitializer(tf.keras.initializers.Initializer):
 
+        def __init__( self, outer):
+            super().__init__()
+            self.outer = outer
+
         def __call__(self, shape, dtype=None):
             ident = tf.constant([[0.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,0.0]])
             sobel_x = tf.constant([[-1.0,0.0,1.0],[-2.0,0.0,2.0],[-1.0,0.0,1.0]])
@@ -29,7 +33,7 @@ class ImgCA(Model):
             lap = tf.constant([[1.0,2.0,1.0],[2.0,-12,2.0],[1.0,2.0,1.0]])
 
             kernel = tf.stack([ident, sobel_x, sobel_y, lap], axis=-1)[:,:,None,:]
-            kernel = tf.repeat(kernel, self.n_channels + self.n_schannels , axis=2)
+            kernel = tf.repeat(kernel, self.outer.n_channels + self.outer.n_schannels , axis=2)
             return kernel
 
     def __init__(self, n_channels, n_schannels ):
@@ -54,7 +58,7 @@ class ImgCA(Model):
             kernel_size=3,\
                 padding='valid',\
                     depth_multiplier= 4,\
-                            depthwise_initializer= ImgCA.PerceptionKernelInitializer())
+                            depthwise_initializer= ImgCA.PerceptionKernelInitializer(self))
 
         self.perception.trainable = False
 
@@ -115,8 +119,12 @@ class ImgCA(Model):
     # TODO: review this.
     def make_seed(self, size, n=1):
         x = np.ones([n, size, size, self.n_channels ], np.float32)
-        s = np.zeros([n, size, size, self.n_schannels ], np.float32) if self.n_schannel > 0 else None
-        ca_seed = np.concatenate([x,s], axis=-1)
+        if self.n_schannels > 0:
+            s = np.zeros([n, size, size, self.n_schannels ], np.float32)  
+            ca_seed = np.concatenate([x,s], axis=-1)
+        else :
+            ca_seed = x
+
         return ca_seed
 
     
