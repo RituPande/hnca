@@ -106,9 +106,10 @@ class HCAImgModel(Model):
 
         step_n = np.random.randint(self.leaf_ca_min_steps, self.leaf_ca_max_steps)
         if parent_x is None:
-            leaf_x = tf.stop_gradient(self.leaf_ca_model.step(leaf_x,s=None,n_steps=step_n, training_type='hca'))
+            leaf_x, s = tf.split(leaf_x, [self.leaf_ca_model.n_channels, -1])
+            leaf_x = tf.stop_gradient(self.leaf_ca_model.step(leaf_x,s,n_steps=step_n, training_type='hca'))
             parent_x = self.feedback(leaf_x)
-            parent_x = self.parent_ca_model(parent_x)
+            parent_x = self.parent_ca_model.step(parent_x,s=None,n_steps=1,training_type='hca')
 
         #Get signal from the parent CA
         s = self._get_signal(parent_x)
@@ -125,7 +126,7 @@ class HCAImgModel(Model):
         # report pooled leaf CA channels back to the parent
         parent_x = self.feedback(leaf_x)
 
-        parent_x = self.parent_ca_model(parent_x)
+        parent_x = self.parent_ca_model.step(parent_x,s=None,n_steps=1,training_type='hca')
 
         return leaf_x, parent_x 
 
@@ -154,13 +155,13 @@ class HCAImgModel(Model):
         else:
             x = self.leaf_ca_model.make_seed(self.leaf_img_target_size)
 
+        x,s = tf.split(x,[self.leaf_ca_model.n_channels,-1])
         step_n = np.random.randint(self.leaf_ca_min_steps, self.leaf_ca_max_steps)
         with tf.GradientTape() as t:
-            x = self.leaf_ca_model.step(x, s=None, n_steps=step_n, training_type='leaf_ca')
+            x = self.leaf_ca_model.step(x, s, n_steps=step_n, training_type='leaf')
             #overflow loss forces the model to output values within -1.0 and 1.0
             overflow_loss = tf.reduce_sum(tf.abs(x - tf.clip_by_value(x, -1.0, 1.0)))
             loss = self.leaf_ca_loss(tf.identity(x)) # + overflow_loss*1e2
-
         if use_pool :
           self.leaf_replay_buffer.add(x.numpy())
 
@@ -179,7 +180,7 @@ class HCAImgModel(Model):
         step_n = np.random.randint(self.parent_ca_min_steps, self.parent_ca_max_steps)
         with tf.GradientTape() as t:
             leaf_x, parent_x = self(leaf_x, None )
-            for _ in tf.range(step_n):
+            for _ in tf.range(step_n-1):
                 leaf_x, parent_x = self(leaf_x, parent_x)
             loss = self.parent_ca_loss(self.target_img, parent_x, is_image=True )
 
@@ -202,21 +203,21 @@ class HCAImgModel(Model):
             gradients_parent_ca = hca_tape.gradient(loss_parent_ca, self.trainable_variables) 
             optimizer_parent_ca.apply_gradients(zip(gradients_parent_ca, self.trainable_variables))
 
-            loss_leaf_ca,leaf_ca_tape = self._loss_step_leaf_ca( e,use_pool, batch_size, training_type='leaf_ca' )
+            loss_leaf_ca,leaf_ca_tape = self._loss_step_leaf_ca( e,use_pool, batch_size, training_type='leaf' )
             leaf_ca_history.append(loss_leaf_ca.numpy())
             gradients_leaf_ca = leaf_ca_tape.gradient(loss_leaf_ca, self.leaf_ca_model.trainable_variables)
             optimizer_leaf_ca.apply_gradients(zip(gradients_leaf_ca, self.leaf_ca_model.trainable_variables))
            
 
-    def create( self, x_initial = None, num_steps=50 ):
+    def step( self, x_initial = None, num_steps=50 ):
         x = x_initial
         
         if x is None:
           leaf_x = self.leaf_ca_model.make_seed(self.target_size, n=1)
-
+         
         leaf_x, parent_x = self(leaf_x,None)
         for _ in tf.range(num_steps-1):
-            leaf_x, parent_x = self(leaf_x, parent_x, use_seed=False)
+            leaf_x, parent_x = self(leaf_x, parent_x)
 
         return leaf_x
     

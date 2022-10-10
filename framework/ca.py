@@ -95,22 +95,27 @@ class ImgCA(Model):
         y = self.perception(x_pad)
         y = self.features(y)
         y = self.new_state(y)
-        # TODO: is the below statement even required? Will it not make the learning error prone?
-        #if training_type=='leaf': y = self._mask_signal_channels(y, [self.n_channels,-1 ])
+        
         y = y*udpate_mask + x
-               
+                 
         return y
 
     def step( self, x, s=None, n_steps = 50, update_rate=0.5, training_type='leaf' ):
 
-        for _ in tf.range(n_steps):
-            x = self(x, s, update_rate,training_type )
+        # In the first step the feature x and signal s are sent as independent inputs
+        x  = self(x, s, update_rate,training_type )
+        for _ in tf.range(n_steps-1):
+             #Remaining steps sets the signal s as None and the output state that has both the feature and signal state
+             # that is taken as input
+            x  = self(x, None, update_rate,training_type )
+           
+    
         return x
     
     # TODO: review this.
     def make_seed(self, size, n=1):
         x = np.ones([n, size, size, self.n_channels ], np.float32)
-        s = np.zeros([n, size, size, self.n_schannels ], np.float32)
+        s = np.zeros([n, size, size, self.n_schannels ], np.float32) if self.n_schannel > 0 else None
         ca_seed = np.concatenate([x,s], axis=-1)
         return ca_seed
 
