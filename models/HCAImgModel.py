@@ -47,7 +47,7 @@ class HCAImgModel(Model):
                             
 
         self.leaf_ca_model =  ImgCA(n_channels=12,n_schannels=4 )
-        self.parent_ca_model =  ImgCA(n_channels=12,n_schannels=0 )
+        self.parent_ca_model =  ImgCA(n_channels=16,n_schannels=0 )
         self.leaf_ca_min_steps = leaf_ca_min_steps
         self.leaf_ca_max_steps = leaf_ca_max_steps
         self.parent_ca_min_steps = parent_ca_min_steps
@@ -125,8 +125,8 @@ class HCAImgModel(Model):
 
         # report pooled leaf CA channels back to the parent
         parent_x = self.feedback(leaf_x)
-
-        parent_x = self.parent_ca_model.step(parent_x,s=None,n_steps=1,training_type='hca')
+        
+        parent_x = self.parent_ca_model.step(parent_x, s=None,n_steps=1,training_type='hca')
 
         return leaf_x, parent_x 
 
