@@ -104,8 +104,11 @@ class ImgCA(Model):
                  
         return y
 
-    def step( self, x, s=None, n_steps = 50, update_rate=0.5, training_type='leaf' ):
+    def step( self, x_initial=None, s=None, n_steps = 50, update_rate=0.5, training_type='leaf' ):
 
+        x = x_initial
+        if x is None:
+            x = self.leaf_ca_model.make_seed(self.leaf_img_target_size, n=1)
         # In the first step the feature x and signal s are sent as independent inputs
         x  = self(x, s, update_rate,training_type )
         for _ in tf.range(n_steps-1):
