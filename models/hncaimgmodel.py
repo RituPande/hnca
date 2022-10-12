@@ -192,22 +192,23 @@ class HCAImgModel(Model):
     def train_hca( self, lr=1e-3, num_epochs= 5000, use_pool=True, batch_size=4 ):
         optimizer_leaf_ca = tf.keras.optimizers.Adam(learning_rate=lr)
         optimizer_parent_ca = tf.keras.optimizers.Adam(learning_rate=lr)
-        parent_ca_history = []
+        hca_history = []
         leaf_ca_history = []
         #TODO lr-patience and learning patience
         #TODO frequency of training leaf ca
         for e in tqdm(tf.range(num_epochs)):
 
             loss_parent_ca,hca_tape = self._loss_step_hca( e, use_pool, batch_size )
-            parent_ca_history.append(loss_parent_ca.numpy())
-            gradients_parent_ca = hca_tape.gradient(loss_parent_ca, self.trainable_variables) 
-            optimizer_parent_ca.apply_gradients(zip(gradients_parent_ca, self.trainable_variables))
+            hca_history.append(loss_parent_ca.numpy())
+            gradients_hca = hca_tape.gradient(loss_parent_ca, self.trainable_variables) 
+            optimizer_parent_ca.apply_gradients(zip(gradients_hca, self.trainable_variables))
 
             loss_leaf_ca,leaf_ca_tape = self._loss_step_leaf_ca( e,use_pool, batch_size, training_type='leaf' )
             leaf_ca_history.append(loss_leaf_ca.numpy())
             gradients_leaf_ca = leaf_ca_tape.gradient(loss_leaf_ca, self.leaf_ca_model.trainable_variables)
             optimizer_leaf_ca.apply_gradients(zip(gradients_leaf_ca, self.leaf_ca_model.trainable_variables))
            
+        return hca_history
 
     def step( self, x_initial = None, num_steps=50 ):
         x = x_initial
