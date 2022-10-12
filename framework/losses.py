@@ -66,7 +66,7 @@ class StyleLoss:
         proj_true = tf.sort(proj_true) # sort on axis = -1
         proj_pred = tf.einsum('bnc,cp->bpn', y_pred, p_vecs)
         proj_pred = tf.sort(proj_pred)
-        loss = tf.reduce_sum(tf.square(proj_true - proj_pred )) # loss for each pixel in each direction and take their mean
+        loss = tf.reduce_mean(tf.square(proj_true - proj_pred )) # loss for each pixel in each direction and take their mean
         loss = tf.cast(loss, dtype=tf.float32 ) # take mean of loss across all directions 
         return loss
 
