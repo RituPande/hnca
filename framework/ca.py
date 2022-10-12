@@ -36,19 +36,20 @@ class ImgCA(Model):
             kernel = tf.repeat(kernel, self.outer.n_channels + self.outer.n_schannels , axis=2)
             return kernel
 
-    def __init__(self, n_channels, n_schannels ):
+    def __init__(self, n_channels, n_schannels, target_size ):
 
         super().__init__()
 
-        self._init_ca_class_members(n_channels, n_schannels )
+        self._init_ca_class_members(n_channels, n_schannels, target_size )
         self._init_ca_layers()
         
    
-    def _init_ca_class_members(self, n_channels, n_schannels):
+    def _init_ca_class_members(self, n_channels, n_schannels, target_size):
         
         self.n_channels = n_channels
         self.n_schannels = n_schannels
         self.n_features = (n_channels + n_schannels)*4
+        self.target_size = target_size
 
     def _init_ca_layers( self  ):
         if self.n_schannels > 0:
@@ -108,7 +109,7 @@ class ImgCA(Model):
 
         x = x_initial
         if x is None:
-            x = self.leaf_ca_model.make_seed(self.leaf_img_target_size, n=1)
+            x = self.make_seed(self.target_size, n=1)
         # In the first step the feature x and signal s are sent as independent inputs
         x  = self(x, s, update_rate,training_type )
         for _ in tf.range(n_steps-1):

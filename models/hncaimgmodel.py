@@ -46,8 +46,8 @@ class HCAImgModel(Model):
                       leaf_ca_min_steps, leaf_ca_max_steps, parent_ca_min_steps, parent_ca_max_steps):
                             
 
-        self.leaf_ca_model =  ImgCA(n_channels=12,n_schannels=4 )
-        self.parent_ca_model =  ImgCA(n_channels=16,n_schannels=0 )
+        self.leaf_ca_model =  ImgCA(n_channels=12,n_schannels=4, target_size=leaf_ca_target )
+        self.parent_ca_model =  ImgCA(n_channels=16,n_schannels=0, target_size=parent_ca_target )
         self.leaf_ca_min_steps = leaf_ca_min_steps
         self.leaf_ca_max_steps = leaf_ca_max_steps
         self.parent_ca_min_steps = parent_ca_min_steps
