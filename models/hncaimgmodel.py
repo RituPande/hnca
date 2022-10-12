@@ -171,7 +171,7 @@ class HCAImgModel(Model):
     def _loss_step_hca(self, curr_epoch, use_pool, batch_size):
         
         if use_pool:
-            leaf_x = self.replay_buffer.sample_batch(batch_size)
+            leaf_x = self.leaf_replay_buffer.sample_batch(batch_size)
             if curr_epoch % 8 == 0:
               leaf_x[:1]= self.leaf_ca_model.make_seed(self.leaf_img_target_size)
         else:
