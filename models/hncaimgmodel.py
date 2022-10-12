@@ -45,16 +45,16 @@ class HCAImgModel(Model):
     def _init_ca_class_members(self, leaf_ca_target,parent_ca_target,\
                       leaf_ca_min_steps, leaf_ca_max_steps, parent_ca_min_steps, parent_ca_max_steps):
                             
-
-        self.leaf_ca_model =  ImgCA(n_channels=12,n_schannels=4, target_size=leaf_ca_target )
-        self.parent_ca_model =  ImgCA(n_channels=16,n_schannels=0, target_size=parent_ca_target )
+        self.leaf_img_target_size = 128
+        self.parent_img_target_size = 32
+        self.leaf_ca_model =  ImgCA(n_channels=12,n_schannels=4, target_size=self.leaf_img_target_size )
+        self.parent_ca_model =  ImgCA(n_channels=16,n_schannels=0, target_size=self.parent_img_target_size )
         self.leaf_ca_min_steps = leaf_ca_min_steps
         self.leaf_ca_max_steps = leaf_ca_max_steps
         self.parent_ca_min_steps = parent_ca_min_steps
         self.parent_ca_max_steps = parent_ca_max_steps
         self.signaling_factor = 4
-        self.leaf_img_target_size = 128
-        self.parent_img_target_size = 32
+
         self.leaf_ca_target_img = load_image(leaf_ca_target)[None,:,:,:3]
         self.parent_ca_target_img = load_image(parent_ca_target)[None,:,:,:3]
 
