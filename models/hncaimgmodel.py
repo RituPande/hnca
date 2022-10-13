@@ -211,9 +211,9 @@ class HCAImgModel(Model):
         return hca_history
 
     def step( self, x_initial = None, num_steps=50 ):
-        x = x_initial
+        leaf_x = x_initial
         
-        if x is None:
+        if leaf_x is None:
           leaf_x = self.leaf_ca_model.make_seed(self.leaf_img_target_size, n=1)
          
         leaf_x, parent_x = self(leaf_x,None)
