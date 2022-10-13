@@ -121,7 +121,7 @@ class HCAImgModel(Model):
         s += orig_signal* self.signal_lr
 
         # iterate through all n steps of leaf CA
-        leaf_x = self.leaf_ca_model.step(features, s=s, n_steps=step_n, training_type='hca')
+        leaf_x = self.leaf_ca_model.step(features, s=s, n_steps=1, training_type='hca')
 
         # report pooled leaf CA channels back to the parent
         parent_x = self.feedback(leaf_x)
@@ -182,7 +182,7 @@ class HCAImgModel(Model):
             leaf_x, parent_x = self(leaf_x, None )
             for _ in tf.range(step_n-1):
                 leaf_x, parent_x = self(leaf_x, parent_x)
-            loss = self.parent_ca_loss(self.target_img, parent_x, is_image=True )
+            loss = self.parent_ca_loss(self.parent_ca_target_img, parent_x, is_image=True )
 
         if use_pool :
           self.leaf_replay_buffer.add(leaf_x.numpy())
@@ -203,7 +203,7 @@ class HCAImgModel(Model):
             gradients_hca = hca_tape.gradient(loss_parent_ca, self.trainable_variables) 
             optimizer_parent_ca.apply_gradients(zip(gradients_hca, self.trainable_variables))
 
-            loss_leaf_ca,leaf_ca_tape = self._loss_step_leaf_ca( e,use_pool, batch_size, training_type='leaf' )
+            loss_leaf_ca,leaf_ca_tape = self._loss_step_leaf_ca( e,use_pool, batch_size )
             leaf_ca_history.append(loss_leaf_ca.numpy())
             gradients_leaf_ca = leaf_ca_tape.gradient(loss_leaf_ca, self.leaf_ca_model.trainable_variables)
             optimizer_leaf_ca.apply_gradients(zip(gradients_leaf_ca, self.leaf_ca_model.trainable_variables))
