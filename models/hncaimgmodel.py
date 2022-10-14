@@ -8,6 +8,7 @@ from tensorflow import keras
 from keras import Model
 from keras.layers import UpSampling2D,Conv2D,AveragePooling2D
 from tqdm import tqdm
+import keras.backend as K
 
 
 
@@ -194,8 +195,9 @@ class HCAImgModel(Model):
         optimizer_hca = tf.keras.optimizers.Adam(learning_rate=lr)
         hca_history = []
         leaf_ca_history = []
-        #TODO lr-patience and learning patience
-        #TODO frequency of training leaf ca
+        early_stopping_patience = 500
+        lr_patience = 250
+        min_loss = np.inf
         for e in tqdm(tf.range(num_epochs)):
 
             loss_hca,hca_tape = self._loss_step_hca( e, use_pool, batch_size )
@@ -208,6 +210,27 @@ class HCAImgModel(Model):
               leaf_ca_history.append(loss_leaf_ca.numpy())
               gradients_leaf_ca = leaf_ca_tape.gradient(loss_leaf_ca, self.leaf_ca_model.trainable_variables)
               optimizer_leaf_ca.apply_gradients(zip(gradients_leaf_ca, self.leaf_ca_model.trainable_variables))
+            
+            if loss_hca + 1e-6 < min_loss:
+              min_loss = loss_hca
+              print("min_loss:",min_loss )
+              early_stopping_patience = 500
+              lr_patience = 250
+              best_model_weights = self.get_weights()
+            else:
+              early_stopping_patience -= 1
+              lr_patience -= 1
+              print("early_stopping_patience:",early_stopping_patience," lr_patience:",lr_patience )
+              if early_stopping_patience == 0:
+                self.set_weights(best_model_weights)
+                break
+            if lr_patience == 0:
+                K.set_value(optimizer_hca.lr, optimizer_hca.lr * 0.1)
+                K.set_value(optimizer_leaf_ca.lr, optimizer_leaf_ca.lr * 0.1)
+                lr_patience = 250
+                self.set_weights(best_model_weights)
+                print("lr:",optimizer_hca.lr )
+
            
         return hca_history
 
