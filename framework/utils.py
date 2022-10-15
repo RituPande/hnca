@@ -24,13 +24,24 @@ def to_rgb(x):
   return x[..., :3]+ 0.5
 
 
-def plot_loss(leaf_ca_history, parent_ca_history=None, hca_history=None):
-  plt.figure(figsize=(10, 4))
-  plt.title('Loss history ')
-  plt.ylim(np.min(leaf_ca_history), leaf_ca_history[0])
-  plt.plot(leaf_ca_history,"bo" , alpha=0.5)
-  plt.plot(parent_ca_history,"ro" , alpha=0.5)
-  plt.plot(hca_history,"go" , alpha=0.5)
+def plot_loss(history1, history2=None, y_label1='Leaf CA history', y_label2=None):
+  fig = plt.figure(figsize=(10, 4))
+  plt.title('Loss history')
+
+  ax1 = fig.add_subplot(111)
+  ax1.plot(history1, 'bo')
+  ax1.set_ylabel(y_label1)
+  ax1.set_ylim(np.min(history1), history1[0])
+
+  if history2 is None:
+    ax2 = ax1.twinx()
+    ax2.plot(history2, 'ro')
+    ax2.set_ylabel(y_label2)
+    ax2.set_ylim(np.min(history2), history2[0])
+
+  for tl in ax2.get_yticklabels():
+    tl.set_color('r')
+  
   plt.show()
 
 
