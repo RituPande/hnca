@@ -39,8 +39,8 @@ def plot_loss(history1, history2=None, y_label1='Leaf CA history', y_label2=None
     ax2.set_ylabel(y_label2)
     ax2.set_ylim(np.min(history2), history2[0])
 
-  for tl in ax2.get_yticklabels():
-    tl.set_color('r')
+    for tl in ax2.get_yticklabels():
+      tl.set_color('r')
   
   plt.show()
 
