@@ -183,11 +183,14 @@ class HCAImgModel(Model):
             leaf_x, parent_x = self(leaf_x, None )
             for _ in tf.range(step_n-1):
                 leaf_x, parent_x = self(leaf_x, parent_x)
-            loss = self.parent_ca_loss(self.parent_ca_target_img, parent_x, is_image=True )
-
+            loss_parent = self.parent_ca_loss(self.parent_ca_target_img, parent_x, is_image=True )
+            loss_leaf = self.leaf_ca_loss(tf.identity(leaf_x) )
+            loss_hca = loss_parent + loss_leaf
+            
         if use_pool :
           self.leaf_replay_buffer.add(leaf_x.numpy())
-        return loss, t
+
+        return loss_leaf, loss_parent, loss_hca, t
 
 
     def train_hca( self, lr=1e-3, num_epochs= 5000, use_pool=True, batch_size=4 ):
@@ -195,21 +198,26 @@ class HCAImgModel(Model):
         optimizer_hca = tf.keras.optimizers.Adam(learning_rate=lr)
         hca_history = []
         leaf_ca_history = []
+        parent_ca_history = []
         early_stopping_patience = 500
         lr_patience = 250
         min_loss = np.inf
         for e in tqdm(tf.range(num_epochs)):
 
-            loss_hca,hca_tape = self._loss_step_hca( e, use_pool, batch_size )
+            loss_leaf, loss_parent, loss_hca, hca_tape = self._loss_step_hca( e, use_pool, batch_size )
+            
             hca_history.append(loss_hca.numpy())
+            parent_ca_history.append(loss_parent.numpy())
+            leaf_ca_history.append(loss_leaf.numpy())
+            
             gradients_hca = hca_tape.gradient(loss_hca, self.trainable_variables) 
             optimizer_hca.apply_gradients(zip(gradients_hca, self.trainable_variables))
 
-            if e % 4 == 0:
-              loss_leaf_ca,leaf_ca_tape = self._loss_step_leaf_ca( e,use_pool, batch_size )
-              leaf_ca_history.append(loss_leaf_ca.numpy())
-              gradients_leaf_ca = leaf_ca_tape.gradient(loss_leaf_ca, self.leaf_ca_model.trainable_variables)
-              optimizer_leaf_ca.apply_gradients(zip(gradients_leaf_ca, self.leaf_ca_model.trainable_variables))
+            #if e % 4 == 0:
+            #  loss_leaf_ca,leaf_ca_tape = self._loss_step_leaf_ca( e,use_pool, batch_size )
+            #  leaf_ca_history.append(loss_leaf_ca.numpy())
+            #  gradients_leaf_ca = leaf_ca_tape.gradient(loss_leaf_ca, self.leaf_ca_model.trainable_variables)
+            #  optimizer_leaf_ca.apply_gradients(zip(gradients_leaf_ca, self.leaf_ca_model.trainable_variables))
             
             if loss_hca + 1e-6 < min_loss:
               min_loss = loss_hca
@@ -232,7 +240,7 @@ class HCAImgModel(Model):
                 print("lr:",optimizer_hca.lr )
 
            
-        return hca_history
+        return leaf_ca_history, parent_ca_history, hca_history
 
     def step( self, x_initial = None, num_steps=50 ):
         leaf_x = x_initial

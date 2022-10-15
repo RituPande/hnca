@@ -24,11 +24,13 @@ def to_rgb(x):
   return x[..., :3]+ 0.5
 
 
-def plot_loss(loss_log):
+def plot_loss(leaf_ca_history, parent_ca_history=None, hca_history=None):
   plt.figure(figsize=(10, 4))
   plt.title('Loss history ')
-  plt.ylim(np.min(loss_log), loss_log[0])
-  plt.plot(loss_log,"o" , alpha=0.5)
+  plt.ylim(np.min(leaf_ca_history), leaf_ca_history[0])
+  plt.plot(leaf_ca_history,"bo" , alpha=0.5)
+  plt.plot(parent_ca_history,"ro" , alpha=0.5)
+  plt.plot(hca_history,"go" , alpha=0.5)
   plt.show()
 
 
