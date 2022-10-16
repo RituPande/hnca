@@ -29,15 +29,15 @@ def plot_loss(history1, history2=None, y_label1='Leaf CA history', y_label2=None
   plt.title('Loss history')
 
   ax1 = fig.add_subplot(111)
-  ax1.plot(history1, 'bo')
+  ax1.plot(history1, 'bo',alpha=0.5)
   ax1.set_ylabel(y_label1)
-  ax1.set_ylim(np.min(history1), history1[0])
+  #ax1.set_ylim(np.min(history1), history1[0])
 
   if history2 is not None:
     ax2 = ax1.twinx()
-    ax2.plot(history2, 'ro')
+    ax2.plot(history2, 'ro', alpha=0.5)
     ax2.set_ylabel(y_label2,color='r')
-    ax2.set_ylim(np.min(history2), history2[0])
+    #ax2.set_ylim(np.min(history2), history2[0])
 
     for tl in ax2.get_yticklabels():
       tl.set_color('r')
