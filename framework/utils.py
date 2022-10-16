@@ -30,7 +30,7 @@ def plot_loss(history1, history2=None, y_label1='Leaf CA history', y_label2=None
 
   ax1 = fig.add_subplot(111)
   ax1.plot(np.log10(history1), 'bo',alpha=0.5)
-  ax1.set_ylabel(y_label1)
+  ax1.set_ylabel(y_label1,color='b')
   #ax1.set_ylim(np.min(history1), history1[0])
   for tl in ax1.get_yticklabels():
     tl.set_color('b')
