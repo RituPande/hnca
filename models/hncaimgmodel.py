@@ -185,7 +185,7 @@ class HCAImgModel(Model):
                 leaf_x, parent_x = self(leaf_x, parent_x)
             loss_parent = self.parent_ca_loss(self.parent_ca_target_img, parent_x, is_image=True )
             loss_leaf = self.leaf_ca_loss(tf.identity(leaf_x) )
-            loss_hca = loss_parent + loss_leaf
+            loss_hca = loss_parent + (loss_leaf*1e-2)
             
         if use_pool :
           self.leaf_replay_buffer.add(leaf_x.numpy())
