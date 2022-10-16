@@ -169,7 +169,7 @@ class HCAImgModel(Model):
         return loss, t
 
     
-    def _loss_step_hca(self, curr_epoch, use_pool, batch_size):
+    def _loss_step_hca(self, curr_epoch, use_pool, batch_size, loss_weightage):
         
         if use_pool:
             leaf_x = self.leaf_replay_buffer.sample_batch(batch_size)
@@ -185,7 +185,7 @@ class HCAImgModel(Model):
                 leaf_x, parent_x = self(leaf_x, parent_x)
             loss_parent = self.parent_ca_loss(self.parent_ca_target_img, parent_x, is_image=True )
             loss_leaf = self.leaf_ca_loss(tf.identity(leaf_x) )
-            loss_hca = loss_parent + loss_leaf
+            loss_hca = loss_parent*loss_weightage[0] + loss_leaf*loss_weightage[1]
             
         if use_pool :
           self.leaf_replay_buffer.add(leaf_x.numpy())
@@ -193,14 +193,17 @@ class HCAImgModel(Model):
         return loss_leaf, loss_parent, loss_hca, t
 
 
-    def train_hca( self, lr=1e-3, num_epochs= 5000, use_pool=True, batch_size=4 ):
+    def train_hca( self, lr=1e-3, num_epochs= 10000, use_pool=True,\
+                      batch_size=4, es_patience_cfg=1000, lr_patience_cfg=750,\
+                        loss_weightage=[10,1] ):
+
         optimizer_leaf_ca = tf.keras.optimizers.Adam(learning_rate=lr)
         optimizer_hca = tf.keras.optimizers.Adam(learning_rate=lr)
         hca_history = []
         leaf_ca_history = []
         parent_ca_history = []
-        early_stopping_patience = 500
-        lr_patience = 250
+        early_stopping_patience = es_patience_cfg
+        lr_patience = lr_patience_cfg
         min_loss = np.inf
         for e in tqdm(tf.range(num_epochs)):
 
@@ -222,8 +225,8 @@ class HCAImgModel(Model):
             if loss_hca + 1e-6 < min_loss:
               min_loss = loss_hca
               print("min_loss:",min_loss )
-              early_stopping_patience = 500
-              lr_patience = 250
+              early_stopping_patience = es_patience_cfg
+              lr_patience = lr_patience_cfg
               best_model_weights = self.get_weights()
             else:
               early_stopping_patience -= 1
@@ -235,7 +238,7 @@ class HCAImgModel(Model):
             if lr_patience == 0:
                 K.set_value(optimizer_hca.lr, optimizer_hca.lr * 0.1)
                 K.set_value(optimizer_leaf_ca.lr, optimizer_leaf_ca.lr * 0.1)
-                lr_patience = 250
+                lr_patience = lr_patience_cfg
                 self.set_weights(best_model_weights)
                 print("lr:",optimizer_hca.lr )
 
