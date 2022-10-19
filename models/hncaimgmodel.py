@@ -193,8 +193,8 @@ class HCAImgModel(Model):
         return loss_leaf, loss_parent, loss_hca, t
 
 
-    def train_hca( self, lr=1e-3, num_epochs= 10000, use_pool=True,\
-                      batch_size=4, es_patience_cfg=1000, lr_patience_cfg=750,\
+    def train_hca( self, lr=1e-3, num_epochs= 2000, use_pool=True,\
+                      batch_size=4, es_patience_cfg=500, lr_patience_cfg=250,\
                         loss_weightage=[10,1] ):
 
         optimizer_leaf_ca = tf.keras.optimizers.Adam(learning_rate=lr)
