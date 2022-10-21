@@ -214,11 +214,10 @@ class HCAImgModel(Model):
             gradients_hca = hca_tape.gradient(loss_hca, self.trainable_variables) 
             optimizer_hca.apply_gradients(zip(gradients_hca, self.trainable_variables))
 
-            #if e % 4 == 0:
-            #  loss_leaf_ca,leaf_ca_tape = self._loss_step_leaf_ca( e,use_pool, batch_size )
-            #  leaf_ca_history.append(loss_leaf_ca.numpy())
-            #  gradients_leaf_ca = leaf_ca_tape.gradient(loss_leaf_ca, self.leaf_ca_model.trainable_variables)
-            #  optimizer_leaf_ca.apply_gradients(zip(gradients_leaf_ca, self.leaf_ca_model.trainable_variables))
+            if e % 4 == 0:
+              loss_leaf_ca,leaf_ca_tape = self._loss_step_leaf_ca( e,use_pool, batch_size )
+              gradients_leaf_ca = leaf_ca_tape.gradient(loss_leaf_ca, self.leaf_ca_model.trainable_variables)
+              optimizer_leaf_ca.apply_gradients(zip(gradients_leaf_ca, self.leaf_ca_model.trainable_variables))
             
             if loss_hca + 1e-6 < min_loss:
               min_loss = loss_hca
