@@ -10,7 +10,6 @@
 import cv2
 import numpy as np
 import random
-from math import dist
 import argparse 
 from skimage.measure import block_reduce
 import tensorflow as tf
@@ -202,6 +201,12 @@ def create_image(image_width = 224 ,image_height= 224, num_circles=10, num_color
 
     cv2.destroyAllWindows()
 
+def create_pooled_img( img_path ):
+  img = cv2.imread(img_path.strip())
+  img = img[None,...]
+  img = AveragePooling2D(pool_size=(4,4) )(tf.cast(img, dtype=tf.float32))
+  img = np.squeeze(img.numpy())
+  cv2.imwrite('hnca/img/leaf_ca_pooled_img_1.png',img)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -214,7 +219,7 @@ if __name__ == '__main__':
     parser.add_argument("-b", "--background", help = "Enter background color of image (0/255)")
     parser.add_argument("-s", "--save_image", help = "Enter (y/n)")
     parser.add_argument("-t", "--target", help ="1- Single 2- Concentric, 3- Circles in quadrants")
-    
+    parser.add_argument("-p", "--pool", help ="path of image to be pooled")
 
     args = parser.parse_args()
 
@@ -225,8 +230,7 @@ if __name__ == '__main__':
     min_radius= int(args.min_radius) if args.min_radius else 5
     max_radius= int(args.max_radius) if args.max_radius else 10
     background = int(args.background) if args.background else 0 
-    target = int(args.target) if args.target else 1 
-
+    target = int(args.target) if args.target else 0 
     save_img= True if args.save_image=='y' else False
 
     points = None
@@ -237,8 +241,10 @@ if __name__ == '__main__':
     elif target == 3:
         points = gen_circles_in_quad(image_height, image_width, num_circles )
     else:
-        print("Incorrect target input")
+        print("No target input")
+    if target is not 0:
+      create_image(image_width,image_height,num_circles,num_colors,min_radius,max_radius,background, save_img, points)
+    if args.pool:
+      create_pooled_img(args.pool)
 
-    create_image(image_width,image_height,num_circles,num_colors,min_radius,max_radius,background, save_img, points)
-    
 
