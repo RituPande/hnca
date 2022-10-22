@@ -60,8 +60,8 @@ class HCAImgModel(Model):
         self.parent_ca_target_img = load_image(parent_ca_target)[None,:,:,:3]
 
         self.leaf_replay_buffer = ReplayBuffer()
+        self.parent_replay_buffer = ReplayBuffer()
         self.leaf_replay_buffer.add( self.leaf_ca_model.make_seed(size=self.leaf_img_target_size, n=256))
-
 
     def _init_loss_objects(self, leaf_ca_loss_type, parent_ca_loss_type ):
 
@@ -147,6 +147,22 @@ class HCAImgModel(Model):
         
         return history
 
+    def pretrain_parent_ca(self, parent_ca_seeds, lr=1e-3, num_epochs= 5000, use_pool=True, batch_size=4):
+      lr_sched = tf.keras.optimizers.schedules.PiecewiseConstantDecay([1000,2000], [lr, lr*0.3, lr*0.3*0.3])
+      optimizer = tf.keras.optimizers.Adam(lr_sched, epsilon=1e-08)
+      history = []
+      self.parent_replay_buffer.add(parent_ca_seeds)
+      
+      for e in tqdm(range(num_epochs)):
+          loss, tape = self._loss_step_parent_ca(e, use_pool, batch_size, parent_ca_seeds)
+          variables = self.parent_ca_model.trainable_variables
+          grads = tape.gradient(loss, variables)
+          grads = [g/(tf.norm(g)+1e-8) for g in grads]
+          optimizer.apply_gradients(zip(grads, variables))
+          history.append(loss.numpy())
+        
+      return history
+
     def _loss_step_leaf_ca(self, curr_epoch, use_pool, batch_size):
 
         if use_pool:
@@ -168,7 +184,28 @@ class HCAImgModel(Model):
 
         return loss, t
 
-    
+    def _loss_step_parent_ca(self, curr_epoch, use_pool, batch_size, parent_ca_seeds):
+
+        if use_pool:
+            x = self.parent_replay_buffer.sample_batch(batch_size)
+            if curr_epoch % 8 == 0:
+              seed_index = np.random.randint(0, len(parent_ca_seeds))
+              x[:1]= self.parent_ca_seeds[seed_index]
+        else:
+            seed_index = np.random.randint(0, len(parent_ca_seeds))
+            x = self.parent_ca_seeds[seed_index]
+
+        step_n = np.random.randint(self.parent_ca_min_steps, self.parent_ca_max_steps)
+        with tf.GradientTape() as t:
+            x = self.parent_ca_model.step(x, None , n_steps=step_n, training_type='parent')
+            #overflow loss forces the model to output values within -1.0 and 1.0
+            overflow_loss = tf.reduce_sum(tf.abs(x - tf.clip_by_value(x, -1.0, 1.0)))
+            loss = self.parent_ca_loss( self.parent_ca_target_img, x ) # + overflow_loss*1e2
+        if use_pool :
+          self.parent_replay_buffer.add(x.numpy())
+
+        return loss, t
+
     def _loss_step_hca(self, curr_epoch, use_pool, batch_size, loss_weightage):
         
         if use_pool:
@@ -241,6 +278,7 @@ class HCAImgModel(Model):
 
            
         return leaf_ca_history, parent_ca_history, hca_history
+
 
     def step( self, x_initial = None, num_steps=50 ):
         leaf_x = x_initial
