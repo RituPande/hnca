@@ -47,6 +47,11 @@ def plot_loss(history1, history2=None, y_label1='Leaf CA history', y_label2=None
   
   plt.show()
 
+def zoom(img, scale=4):
+  img = np.repeat(img, scale, 0)
+  img = np.repeat(img, scale, 1)
+  return img
+
 
     
     
