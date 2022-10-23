@@ -217,7 +217,7 @@ class HCAImgModel(Model):
               x[:1]= self.parent_ca_seeds[seed_index]
         else:
             seed_index = np.random.randint(0, len(parent_ca_seeds))
-            x = self.parent_ca_seeds[seed_index]
+            x[:1] = self.parent_ca_seeds[seed_index]
 
         step_n = np.random.randint(self.parent_ca_min_steps, self.parent_ca_max_steps)
         with tf.GradientTape() as t:
