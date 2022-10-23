@@ -147,20 +147,44 @@ class HCAImgModel(Model):
         
         return history
 
-    def pretrain_parent_ca(self, parent_ca_seeds, lr=1e-3, num_epochs= 5000, use_pool=True, batch_size=4):
-      lr_sched = tf.keras.optimizers.schedules.PiecewiseConstantDecay([1000,2000], [lr, lr*0.3, lr*0.3*0.3])
-      optimizer = tf.keras.optimizers.Adam(lr_sched, epsilon=1e-08)
+    def pretrain_parent_ca(self, parent_ca_seeds, lr=1e-3, num_epochs= 5000,\
+                                   use_pool=True, batch_size=4,\
+                                     es_patience_cfg=500, lr_patience_cfg=250):
+      
+      optimizer = tf.keras.optimizers.Adam(learning_rate=lr, epsilon=1e-08)
       history = []
       self.parent_replay_buffer.add(parent_ca_seeds)
       
+      es_patience = es_patience_cfg
+      lr_patience = lr_patience_cfg
+      min_loss = np.inf
       for e in tqdm(range(num_epochs)):
-          loss, tape = self._loss_step_parent_ca(e, use_pool, batch_size, parent_ca_seeds)
-          variables = self.parent_ca_model.trainable_variables
-          grads = tape.gradient(loss, variables)
-          grads = [g/(tf.norm(g)+1e-8) for g in grads]
-          optimizer.apply_gradients(zip(grads, variables))
-          history.append(loss.numpy())
-        
+        loss, tape = self._loss_step_parent_ca(e, use_pool, batch_size, parent_ca_seeds)
+        variables = self.parent_ca_model.trainable_variables
+        grads = tape.gradient(loss, variables)
+        grads = [g/(tf.norm(g)+1e-8) for g in grads]
+        optimizer.apply_gradients(zip(grads, variables))
+        history.append(loss.numpy())
+
+        if loss + 1e-6 < min_loss:
+          min_loss = loss
+          print("min_loss:",min_loss )
+          early_stopping_patience = es_patience_cfg
+          lr_patience = lr_patience_cfg
+          best_model_weights = self.get_weights()
+        else:
+          early_stopping_patience -= 1
+          lr_patience -= 1
+          print("early_stopping_patience:",early_stopping_patience," lr_patience:",lr_patience )
+          if early_stopping_patience == 0:
+            self.set_weights(best_model_weights)
+            break
+            
+        if lr_patience == 0:
+            K.set_value(optimizer.lr, optimizer.lr * 0.1)
+            lr_patience = lr_patience_cfg
+            self.set_weights(best_model_weights)
+                        
       return history
 
     def _loss_step_leaf_ca(self, curr_epoch, use_pool, batch_size):
