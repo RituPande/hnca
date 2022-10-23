@@ -214,17 +214,17 @@ class HCAImgModel(Model):
             x = self.parent_replay_buffer.sample_batch(batch_size)
             if curr_epoch % 8 == 0:
               seed_index = np.random.randint(0, len(parent_ca_seeds))
-              x[:1]= self.parent_ca_seeds[seed_index]
+              x[:1]= parent_ca_seeds[seed_index]
         else:
             seed_index = np.random.randint(0, len(parent_ca_seeds))
-            x[:1] = self.parent_ca_seeds[seed_index]
+            x[:1] = parent_ca_seeds[seed_index]
 
         step_n = np.random.randint(self.parent_ca_min_steps, self.parent_ca_max_steps)
         with tf.GradientTape() as t:
             x = self.parent_ca_model.step(x, None , n_steps=step_n, training_type='parent')
             #overflow loss forces the model to output values within -1.0 and 1.0
             overflow_loss = tf.reduce_sum(tf.abs(x - tf.clip_by_value(x, -1.0, 1.0)))
-            loss = self.parent_ca_loss( self.parent_ca_target_img, x ) # + overflow_loss*1e2
+            loss = self.parent_ca_loss( self.parent_ca_target_img, x, is_image=True ) # + overflow_loss*1e2
         if use_pool :
           self.parent_replay_buffer.add(x.numpy())
 
