@@ -11,6 +11,7 @@ import cv2
 import numpy as np
 import random
 import argparse 
+from math import dist
 from skimage.measure import block_reduce
 import tensorflow as tf
 from keras.layers import AveragePooling2D
