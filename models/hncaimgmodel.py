@@ -158,7 +158,7 @@ class HCAImgModel(Model):
       if seed_args['seed']:
           seed = seed_args['seed']
           seeds = seed[None,...]
-          seeds = np.repeat(seeds, 512, axis=0)
+          seeds = np.repeat(seeds, self.parent_replay_buffer.max_len, axis=0)
           self.parent_replay_buffer.add(seeds)
       else:
           seeds = np.zeros((self.parent_replay_buffer.max_len,self.parent_img_target_size,self.parent_img_target_size ), 3 )
