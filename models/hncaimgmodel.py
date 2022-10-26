@@ -1,6 +1,6 @@
 from hnca.framework.ca import ImgCA
 from hnca.framework.losses import StyleLoss, MSELoss
-from hnca.framework.utils import load_image, show_image, plot_loss
+from hnca.framework.utils import load_image, show_image, plot_loss, create_parent_seed 
 from hnca.framework.types import ReplayBuffer
 import tensorflow as tf
 import numpy as np
@@ -147,14 +147,33 @@ class HCAImgModel(Model):
         
         return history
 
-    def pretrain_parent_ca(self, parent_ca_seeds, lr=1e-3, num_epochs= 5000,\
+    def pretrain_parent_ca(self, seed_args, lr=1e-3, num_epochs= 5000,\
                                    use_pool=True, batch_size=4,\
                                      es_patience_cfg=500, lr_patience_cfg=250,\
-                                      num_batches_per_epoch=8):
+                                      num_batches_per_epoch=8, ):
       
       optimizer = tf.keras.optimizers.Adam(learning_rate=lr, epsilon=1e-08, )
       history = []
-      self.parent_replay_buffer.add(parent_ca_seeds)
+      seed = None
+      if seed_args['seed']:
+          seed = seed_args['seed']
+          seeds = seed[None,...]
+          seeds = np.repeat(seeds, 512, axis=0)
+          self.parent_replay_buffer.add(seeds)
+      else:
+          seeds = np.zeros((self.parent_replay_buffer.max_len,self.parent_img_target_size,self.parent_img_target_size ), 3 )
+          for i in range(len(seeds)):
+                seeds[i] = create_parent_seed(self.leaf_img_target_size,\
+                                      self.leaf_img_target_size,\
+                                        seed_args['colors'],\
+                                           seed_args['bg'],\
+                                            self.signaling_factor,\
+                                             seed_args['num_circles'],\
+                                              seed_args['min_radius'],\
+                                                seed_args['max_radius'])
+          
+          self.parent_replay_buffer.add(seeds)
+          
       
       es_patience = es_patience_cfg
       lr_patience = lr_patience_cfg
@@ -163,7 +182,7 @@ class HCAImgModel(Model):
       for e in tqdm(tf.range(num_epochs)):
         batch_loss = 0
         for _ in tf.range(num_batches_per_epoch):
-          loss, tape = self._loss_step_parent_ca(e, parent_ca_seeds, use_pool, batch_size)
+          loss, tape = self._loss_step_parent_ca(e, use_pool, batch_size, seed_args)
           batch_loss += loss
           variables = self.parent_ca_model.trainable_variables
           grads = tape.gradient(loss, variables)
@@ -215,16 +234,34 @@ class HCAImgModel(Model):
 
         return loss, t
 
-    def _loss_step_parent_ca(self, curr_epoch, parent_ca_seeds, use_pool, batch_size ):
+    def _loss_step_parent_ca(self, curr_epoch, use_pool, batch_size, seed_args ):
 
         if use_pool:
             x = self.parent_replay_buffer.sample_batch(batch_size)
             if curr_epoch % 8 == 0:
-              seed_index = np.random.randint(0, len(parent_ca_seeds))
-              x[:1]= parent_ca_seeds[seed_index]
+              if seed_args['seed'] :
+                x[:1] = seed_args['seed']
+              else:
+                x[:1] = create_parent_seed(self.leaf_img_target_size,\
+                                      self.leaf_img_target_size,\
+                                        seed_args['colors'],\
+                                           seed_args['bg'],\
+                                            self.signaling_factor,\
+                                             seed_args['num_circles'],\
+                                              seed_args['min_radius'],\
+                                                seed_args['max_radius'])
         else:
-            seed_index = np.random.randint(0, len(parent_ca_seeds))
-            x[:1] = parent_ca_seeds[seed_index]
+            if seed_args['seed'] :
+              x[:1] = seed_args['seed']
+            else:
+              x[:1] = create_parent_seed(self.leaf_img_target_size,\
+                                      self.leaf_img_target_size,\
+                                        seed_args['colors'],\
+                                           seed_args['bg'],\
+                                            self.signaling_factor,\
+                                             seed_args['num_circles'],\
+                                              seed_args['min_radius'],\
+                                                seed_args['max_radius'])
 
         step_n = np.random.randint(self.parent_ca_min_steps, self.parent_ca_max_steps)
         with tf.GradientTape() as t:

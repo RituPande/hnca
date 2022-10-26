@@ -97,18 +97,18 @@ class CellDetector:
     return cell_masks, cell_members
 
     
-class ReplayBuffer:
+class ReplayBuffer(deque):
   def __init__(self, max_len=256):
-    self.buffer = deque(maxlen=max_len) 
+    super.__init__(maxlen=max_len) 
 
   def add(self, x ) :
-    self.buffer.extendleft(x)
+    self.extendleft(x)
 
   def sample_batch(self, batch_size):
-    mini_batch = random.sample( self.buffer, min(len(self.buffer), batch_size))
+    mini_batch = random.sample( self, min(len(self), batch_size))
     mini_batch = np.asarray(mini_batch)
     return mini_batch
-
+  
 class Graph:
     def __init__(self, x, mode='number', k=8, radius=5  ):
         assert mode=='number' or mode=='radius'
