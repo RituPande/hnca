@@ -71,6 +71,7 @@ def collides( test_c, circles):
     return ret_val
 
 def fillCircles( img, circles, colors):
+    
     num_colors = len(colors)
     color_index = 0
     circle_index = 0
@@ -99,11 +100,13 @@ def create_random_circles(image_width, image_height, num_circles, min_radius, ma
     return circles
 
 def create_parent_seed(image_height,image_width, colors, bg, scale, num_circles, min_radius, max_radius):
-    img = np.full((image_height,image_width, 16),bg ,dtype=np.uint8 )
+    img = np.full((image_height,image_width,3),bg ,dtype=np.uint8 )
     circles = create_random_circles(image_width, image_height, num_circles, min_radius, max_radius)
-    fillCircles(img[...,:3], circles, colors)
-    img = img[None,...]
-    img = AveragePooling2D(pool_size=(scale,scale) )(tf.cast(img, dtype=tf.float32)) 
-    return img[0]
+    img = fillCircles(img, circles, colors)
+    latent_ch = np.zeros((image_height,image_width,13),dtype=np.uint8 )
+    seed = np.concatenate([img, latent_ch], axis= -1)
+    seed = seed[None,...]
+    seed = AveragePooling2D(pool_size=(scale,scale) )(tf.cast(seed, dtype=tf.float32)) 
+    return seed[0]
     
     
