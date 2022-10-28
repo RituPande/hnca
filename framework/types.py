@@ -99,7 +99,7 @@ class CellDetector:
     
 class ReplayBuffer(deque):
   def __init__(self, max_len=256):
-    super.__init__(maxlen=max_len) 
+    super().__init__(maxlen=max_len) 
 
   def add(self, x ) :
     self.extendleft(x)

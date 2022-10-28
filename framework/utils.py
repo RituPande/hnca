@@ -1,11 +1,11 @@
 import tensorflow as tf  
 import matplotlib.pyplot as plt
 import numpy as np
-from math import dist
 import cv2
 import random
 import PIL
 from keras.layers import AveragePooling2D
+
 
 def load_image( image_path, max_size = 128):  
   img =  PIL.Image.open(image_path)
@@ -63,7 +63,8 @@ def collides( test_c, circles):
     ret_val = False
     for c in circles:
         x, y, r = c
-        if dist([test_x, test_y], [x,y] ) < (test_r + r):
+        d = np.sqrt( (test_x - x)**2 + (test_y - y)**2 )
+        if d < (test_r + r):
             ret_val = True
             break
 
@@ -98,10 +99,9 @@ def create_random_circles(image_width, image_height, num_circles, min_radius, ma
     return circles
 
 def create_parent_seed(image_height,image_width, colors, bg, scale, num_circles, min_radius, max_radius):
-    img = np.full((image_height,image_width, 3),bg ,dtype=np.uint8 )
+    img = np.full((image_height,image_width, 16),bg ,dtype=np.uint8 )
     circles = create_random_circles(image_width, image_height, num_circles, min_radius, max_radius)
-    img = fillCircles(img, circles, colors)
-
+    fillCircles(img[...,:3], circles, colors)
     img = img[None,...]
     img = AveragePooling2D(pool_size=(scale,scale) )(tf.cast(img, dtype=tf.float32)) 
     return img[0]

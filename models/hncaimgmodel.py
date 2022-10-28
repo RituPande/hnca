@@ -155,10 +155,10 @@ class HCAImgModel(Model):
       optimizer = tf.keras.optimizers.Adam(learning_rate=lr, epsilon=1e-08, )
       history = []
       seed = None
-      if seed_args['seed']:
+      if seed_args['seed'] is not None:
           seed = seed_args['seed']
           seeds = seed[None,...]
-          seeds = np.repeat(seeds, self.parent_replay_buffer.max_len, axis=0)
+          seeds = np.repeat(seeds, self.parent_replay_buffer.maxlen, axis=0)
           self.parent_replay_buffer.add(seeds)
       else:
           seeds = np.zeros((self.parent_replay_buffer.max_len,self.parent_img_target_size,self.parent_img_target_size ), 3 )
@@ -239,7 +239,7 @@ class HCAImgModel(Model):
         if use_pool:
             x = self.parent_replay_buffer.sample_batch(batch_size)
             if curr_epoch % 8 == 0:
-              if seed_args['seed'] :
+              if seed_args['seed'] is not None :
                 x[:1] = seed_args['seed']
               else:
                 x[:1] = create_parent_seed(self.leaf_img_target_size,\
@@ -251,7 +251,7 @@ class HCAImgModel(Model):
                                               seed_args['min_radius'],\
                                                 seed_args['max_radius'])
         else:
-            if seed_args['seed'] :
+            if seed_args['seed'] is not None :
               x[:1] = seed_args['seed']
             else:
               x[:1] = create_parent_seed(self.leaf_img_target_size,\
