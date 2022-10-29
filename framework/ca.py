@@ -36,19 +36,19 @@ class ImgCA(Model):
             kernel = tf.repeat(kernel, self.outer.n_channels + self.outer.n_schannels , axis=2)
             return kernel
 
-    def __init__(self, n_channels, n_schannels, target_size ):
+    def __init__(self, n_channels, n_schannels, target_size, n_features=128 ):
 
         super().__init__()
 
-        self._init_ca_class_members(n_channels, n_schannels, target_size )
+        self._init_ca_class_members(n_channels, n_schannels, target_size, n_features )
         self._init_ca_layers()
         
    
-    def _init_ca_class_members(self, n_channels, n_schannels, target_size):
+    def _init_ca_class_members(self, n_channels ,n_schannels, target_size, n_features):
         
         self.n_channels = n_channels
         self.n_schannels = n_schannels
-        self.n_features = (n_channels + n_schannels)*4
+        self.n_features = n_features
         self.target_size = target_size
 
     def _init_ca_layers( self  ):
