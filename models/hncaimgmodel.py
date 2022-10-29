@@ -161,8 +161,8 @@ class HCAImgModel(Model):
           seeds = np.repeat(seeds, self.parent_replay_buffer.maxlen, axis=0)
           self.parent_replay_buffer.add(seeds)
       else:
-          seeds = np.zeros((self.parent_replay_buffer.maxlen,self.parent_img_target_size,self.parent_img_target_size ), 3 )
-          for i in range(len(seeds)):
+          seeds = np.zeros((self.parent_replay_buffer.maxlen,self.parent_img_target_size,self.parent_img_target_size , 16) )
+          for i in tf.range(len(seeds)):
                 seeds[i] = create_parent_seed(self.leaf_img_target_size,\
                                       self.leaf_img_target_size,\
                                         seed_args['colors'],\
