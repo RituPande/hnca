@@ -99,14 +99,14 @@ def create_random_circles(image_width, image_height, num_circles, min_radius, ma
     #print(circles)
     return circles
 
-def create_parent_seed(image_height,image_width, colors, bg, scale, num_circles, min_radius, max_radius):
+def create_parent_seed(image_height,image_width, colors, bg, scale, num_circles, min_radius, max_radius, n_channels=16):
     img = np.full((image_height,image_width,3),bg ,dtype=np.uint8 )
     circles = create_random_circles(image_width, image_height, num_circles, min_radius, max_radius)
     img = fillCircles(img, circles, colors)
-    latent_ch = np.zeros((image_height,image_width,13),dtype=np.uint8 )
+    latent_ch = np.zeros((image_height,image_width,n_channels-3),dtype=np.uint8 )
     seed = np.concatenate([img, latent_ch], axis= -1)
     seed = seed[None,...]
     seed = AveragePooling2D(pool_size=(scale,scale) )(tf.cast(seed, dtype=tf.float32)) 
-    return seed[0]
+    return seed[0]/255.0
     
     
