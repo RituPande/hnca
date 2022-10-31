@@ -50,7 +50,7 @@ class HCAImgModel(Model):
         self.parent_img_target_size = 32
         # n_features for leaf_ca = (n_channels + n_schannels)*4
         self.leaf_ca_model =  ImgCA(n_channels=12,n_schannels=4,target_size=self.leaf_img_target_size, n_features = 64 )
-        self.parent_ca_model =  ImgCA(n_channels=16,n_schannels=0, target_size=self.parent_img_target_size, n_features=128 )
+        self.parent_ca_model =  ImgCA(n_channels=16,n_schannels=0, target_size=self.parent_img_target_size, n_features=64 )
         self.leaf_ca_min_steps = leaf_ca_min_steps
         self.leaf_ca_max_steps = leaf_ca_max_steps
         self.parent_ca_min_steps = parent_ca_min_steps
@@ -162,7 +162,7 @@ class HCAImgModel(Model):
           seeds = np.repeat(seeds, self.parent_replay_buffer.maxlen, axis=0)
           self.parent_replay_buffer.add(seeds)
       else:
-          seeds = np.zeros((self.parent_replay_buffer.maxlen,self.parent_img_target_size,self.parent_img_target_size , 16) )
+          seeds = np.zeros((self.parent_replay_buffer.maxlen,self.parent_img_target_size,self.parent_img_target_size , self.parent_ca_model.n_channels) )
           for i in tf.range(len(seeds)):
                 seeds[i] = create_parent_seed(self.leaf_img_target_size,\
                                       self.leaf_img_target_size,\
@@ -171,7 +171,8 @@ class HCAImgModel(Model):
                                             self.signaling_factor,\
                                              seed_args['num_circles'],\
                                               seed_args['min_radius'],\
-                                                seed_args['max_radius'])
+                                                seed_args['max_radius'],\
+                                                  n_channels = self.parent_ca_model.n_channels)
           
           self.parent_replay_buffer.add(seeds)
           
@@ -250,7 +251,8 @@ class HCAImgModel(Model):
                                             self.signaling_factor,\
                                              seed_args['num_circles'],\
                                               seed_args['min_radius'],\
-                                                seed_args['max_radius'])
+                                                seed_args['max_radius'],\
+                                                  n_channels = self.parent_ca_model.n_channels)
         else:
             if seed_args['seed'] is not None :
               x[:1] = seed_args['seed']
@@ -262,7 +264,8 @@ class HCAImgModel(Model):
                                             self.signaling_factor,\
                                              seed_args['num_circles'],\
                                               seed_args['min_radius'],\
-                                                seed_args['max_radius'])
+                                                seed_args['max_radius'],\
+                                                  n_channels = self.parent_ca_model.n_channels)
 
         step_n = np.random.randint(self.parent_ca_min_steps, self.parent_ca_max_steps)
         with tf.GradientTape() as t:
