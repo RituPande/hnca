@@ -157,9 +157,9 @@ class HCAImgModel(Model):
       history = []
       seed = None
       if seed_args['seed'] is not None:
-          seed = seed_args['seed']
-          seeds = seed[None,...]
-          seeds = np.repeat(seeds, self.parent_replay_buffer.maxlen, axis=0)
+          seeds = seed_args['seed']
+          repeat_count = self.parent_replay_buffer.maxlen//len(seeds)
+          seeds = np.repeat(seeds, repeat_count, axis=0)
           self.parent_replay_buffer.add(seeds)
       else:
           seeds = np.zeros((self.parent_replay_buffer.maxlen,self.parent_img_target_size,self.parent_img_target_size , self.parent_ca_model.n_channels) )
@@ -242,9 +242,10 @@ class HCAImgModel(Model):
             x = self.parent_replay_buffer.sample_batch(batch_size)
             if curr_epoch % 8 == 0:
               if seed_args['seed'] is not None :
-                x[:1] = seed_args['seed']
+                k = np.random.randint(0, len(seed_args['seed']))
+                x[0] = seed_args['seed'][k]
               else:
-                x[:1] = create_parent_seed(self.leaf_img_target_size,\
+                x[0] = create_parent_seed(self.leaf_img_target_size,\
                                       self.leaf_img_target_size,\
                                         seed_args['colors'],\
                                            seed_args['bg'],\
@@ -255,9 +256,10 @@ class HCAImgModel(Model):
                                                   n_channels = self.parent_ca_model.n_channels)
         else:
             if seed_args['seed'] is not None :
-              x[:1] = seed_args['seed']
+              k = np.random.randint(0, len(seed_args['seed'])-1)
+              x[0] = seed_args['seed'][k]
             else:
-              x[:1] = create_parent_seed(self.leaf_img_target_size,\
+              x[0] = create_parent_seed(self.leaf_img_target_size,\
                                       self.leaf_img_target_size,\
                                         seed_args['colors'],\
                                            seed_args['bg'],\
