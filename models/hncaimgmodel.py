@@ -197,14 +197,14 @@ class HCAImgModel(Model):
         if batch_loss + 1e-6 < min_loss:
           min_loss = batch_loss
           print("min_loss:",min_loss )
-          early_stopping_patience = es_patience_cfg
+          es_patience = es_patience_cfg
           lr_patience = lr_patience_cfg
           best_model_weights = self.get_weights()
         else:
-          early_stopping_patience -= 1
+          es_patience -= 1
           lr_patience -= 1
-          print("early_stopping_patience:",early_stopping_patience," lr_patience:",lr_patience )
-          if early_stopping_patience == 0:
+          print("early_stopping_patience:",es_patience," lr_patience:",lr_patience )
+          if es_patience == 0:
             self.set_weights(best_model_weights)
             break
             
