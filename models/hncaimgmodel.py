@@ -205,7 +205,7 @@ class HCAImgModel(Model):
         else:
           es_patience -= 1
           lr_patience -= 1
-          print("loss:",batch_loss," es_patience:",es_patience," lr_patience:",lr_patience )
+          print("loss:",batch_loss.numpy()," es_patience:",es_patience," lr_patience:",lr_patience )
           if es_patience == 0:
             self.set_weights(best_model_weights)
             break
