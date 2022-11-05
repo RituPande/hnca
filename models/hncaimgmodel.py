@@ -159,8 +159,10 @@ class HCAImgModel(Model):
       if seed_args['seed'] is not None:
           seeds = seed_args['seed']
           repeat_count = self.parent_replay_buffer.maxlen//len(seeds)
-          seeds = np.repeat(seeds, repeat_count, axis=0)
-          self.parent_replay_buffer.add(seeds)
+          repeated_seeds = np.repeat(seeds, repeat_count, axis=0)
+          self.parent_replay_buffer.add(repeated_seeds)
+          add_count = self.parent_replay_buffer.maxlen % len(seeds)
+          if add_count: self.parent_replay_buffer.add(seeds[-add_count:,...])
       else:
           seeds = np.zeros((self.parent_replay_buffer.maxlen,self.parent_img_target_size,self.parent_img_target_size , self.parent_ca_model.n_channels) )
           for i in tf.range(len(seeds)):
