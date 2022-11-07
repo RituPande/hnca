@@ -11,10 +11,12 @@ import cv2
 import numpy as np
 import random
 import argparse 
-from math import dist
 from skimage.measure import block_reduce
 import tensorflow as tf
 from keras.layers import AveragePooling2D
+import PIL
+from IPython.display import display
+
 
 """
 Description:
@@ -35,7 +37,7 @@ def collides( test_c, circles):
     ret_val = False
     for c in circles:
         x, y, r = c
-        if dist([test_x, test_y], [x,y] ) < (test_r + r):
+        if np.sqrt((test_x -x)**2 + ( test_y - y)**2) < (test_r + r):
             ret_val = True
             break
 
@@ -168,26 +170,32 @@ None
 """
 
 
-def create_image(image_width = 224 ,image_height= 224, num_circles=10, num_colors = 2, min_radius=5, max_radius=10, bg=52, save_img = True, target_points=None ):
+def create_image(image_width = 224 ,image_height= 224, num_circles=10, num_colors = 2, min_radius=5, max_radius=10, bg=52, save_img=True, target_points=None, colors=None ):
 
     # generate leaf CA target image
     img = np.full((image_height,image_width, 3),bg , dtype=np.uint8 )
+    noise = np.random.randint(0,5,size=(image_height,image_width, 3), dtype=np.uint8)
+    img += noise
     circles = create_random_circles(image_width, image_height, num_circles, min_radius, max_radius)
-    colors = get_unique_colors(num_colors)
+    if colors is None:
+      print("colors are empty")
+      colors = get_unique_colors(num_colors)
     img = fillCircles(img, circles, colors, None)
-    cv2.imshow('image', img)
-    cv2.waitKey(0)
+    
+    print( "save_img:", save_img)
+    #cv2.imshow('image', img)
+    
     if save_img:
         cv2.imwrite('../img/leaf_ca_target_img.png',img)
 
     # generate HCA target image
     img = np.full((image_height,image_width, 3),bg , dtype=np.uint8 )
     img = fillCircles(img, circles, colors, target_points)
-    cv2.imshow('image', img)
-    cv2.waitKey(0)
+    #cv2.imshow('image', img)
+    
     if save_img:
         cv2.imwrite('../img/hca_target_img.png',img)
-
+    
     # generate leaf CA feedback
     img = img[None,...]
     img = AveragePooling2D(pool_size=(4,4) )(tf.cast(img, dtype=tf.float32)) 
@@ -195,12 +203,12 @@ def create_image(image_width = 224 ,image_height= 224, num_circles=10, num_color
     #img = block_reduce(img,(2,2,1), func=np.mean)
     print(img.shape)
     img = np.squeeze(img.numpy())
-    cv2.imshow('image', img)
-    cv2.waitKey(0)
+    #cv2.imshow('image', img)
+    
     if save_img:
         cv2.imwrite('../img/hca_pooled_img.png',img)
-
-    cv2.destroyAllWindows()
+   
+    
 
 def create_pooled_img( img_path ):
   img = cv2.imread(img_path.strip())
@@ -244,7 +252,8 @@ if __name__ == '__main__':
     else:
         print("No target input")
     if target is not 0:
-      create_image(image_width,image_height,num_circles,num_colors,min_radius,max_radius,background, save_img, points)
+      colors = [(9,230,199), ( 250, 3, 185)]
+      create_image(image_width,image_height,num_circles,num_colors,min_radius,max_radius,background, save_img, points, colors)
     if args.pool:
       create_pooled_img(args.pool)
 
