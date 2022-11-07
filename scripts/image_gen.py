@@ -189,6 +189,7 @@ def create_image(image_width = 224 ,image_height= 224, num_circles=10, num_color
     # generate HCA target image
     img = np.full((image_height,image_width, 3),bg , dtype=np.uint8 )
     img = fillCircles(img, circles, colors, target_points)
+    img += noise
     #cv2.imshow('image', img)
     
     if save_img:
