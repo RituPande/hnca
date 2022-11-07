@@ -178,11 +178,9 @@ def create_image(image_width = 224 ,image_height= 224, num_circles=10, num_color
     img += noise
     circles = create_random_circles(image_width, image_height, num_circles, min_radius, max_radius)
     if colors is None:
-      print("colors are empty")
       colors = get_unique_colors(num_colors)
     img = fillCircles(img, circles, colors, None)
     
-    print( "save_img:", save_img)
     #cv2.imshow('image', img)
     
     if save_img:
@@ -201,7 +199,7 @@ def create_image(image_width = 224 ,image_height= 224, num_circles=10, num_color
     img = AveragePooling2D(pool_size=(4,4) )(tf.cast(img, dtype=tf.float32)) 
     #img = block_reduce(img,(2,2,1), func=np.mean)
     #img = block_reduce(img,(2,2,1), func=np.mean)
-    print(img.shape)
+   
     img = np.squeeze(img.numpy())
     #cv2.imshow('image', img)
     
