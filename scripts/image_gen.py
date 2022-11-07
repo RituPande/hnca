@@ -175,12 +175,12 @@ def create_image(image_width = 224 ,image_height= 224, num_circles=10, num_color
     # generate leaf CA target image
     img = np.full((image_height,image_width, 3),bg , dtype=np.uint8 )
     noise = np.random.randint(0,5,size=(image_height,image_width, 3), dtype=np.uint8)
-    img += noise
+    
     circles = create_random_circles(image_width, image_height, num_circles, min_radius, max_radius)
     if colors is None:
       colors = get_unique_colors(num_colors)
     img = fillCircles(img, circles, colors, None)
-    
+    img += noise
     #cv2.imshow('image', img)
     
     if save_img:
