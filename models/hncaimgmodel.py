@@ -50,7 +50,7 @@ class HCAImgModel(Model):
         self.parent_img_target_size = 32
         # n_features for leaf_ca = (n_channels + n_schannels)*4
         self.leaf_ca_model =  ImgCA(n_channels=12,n_schannels=4,target_size=self.leaf_img_target_size, n_features = 64 )
-        self.parent_ca_model =  ImgCA(n_channels=16,n_schannels=0, target_size=self.parent_img_target_size, n_features=64 )
+        self.parent_ca_model =  ImgCA(n_channels=32,n_schannels=0, target_size=self.parent_img_target_size, n_features=64 )
         self.leaf_ca_min_steps = leaf_ca_min_steps
         self.leaf_ca_max_steps = leaf_ca_max_steps
         self.parent_ca_min_steps = parent_ca_min_steps
@@ -103,6 +103,13 @@ class HCAImgModel(Model):
         s = self.upscale_signal(s)
         return s
 
+
+    def _reload_optimizer(self,optimizer, grad_vars,best_opt_weights, reduce_lr=True):
+        zero_grads = [tf.zeros_like(w) for w in grad_vars]
+        optimizer.apply_gradients(zip(zero_grads, grad_vars))
+        optimizer.set_weights(best_opt_weights)
+        if reduce_lr: K.set_value(optimizer.lr, optimizer.lr * 0.1)
+        return optimizer
 
     def call(self, leaf_x, parent_x=None ):
 
@@ -188,7 +195,7 @@ class HCAImgModel(Model):
         for _ in tf.range(num_batches_per_epoch):
           loss, tape = self._loss_step_parent_ca(e, use_pool, batch_size, seed_args)
           batch_loss += loss
-          variables = self.parent_ca_model.trainable_variables
+          variables = self.parent_ca_model.trainable_weights
           grads = tape.gradient(loss, variables)
           grads = [g/(tf.norm(g)+1e-8) for g in grads]
           optimizer.apply_gradients(zip(grads, variables))
@@ -202,6 +209,7 @@ class HCAImgModel(Model):
           es_patience = es_patience_cfg
           lr_patience = lr_patience_cfg
           best_model_weights = self.get_weights()
+          best_opt_weights = optimizer.get_weights()
         else:
           es_patience -= 1
           lr_patience -= 1
@@ -211,7 +219,9 @@ class HCAImgModel(Model):
             break
             
         if lr_patience == 0:
-          K.set_value(optimizer.lr, optimizer.lr * 0.1)
+          optimizer = self._reload_optimizer(optimizer,\
+                                 self.parent_ca_model.trainable_variables,\
+                                    best_opt_weights)
           print("New lr:",optimizer.lr)
           lr_patience = lr_patience_cfg
           self.set_weights(best_model_weights)
