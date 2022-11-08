@@ -195,7 +195,7 @@ class HCAImgModel(Model):
         for _ in tf.range(num_batches_per_epoch):
           loss, tape = self._loss_step_parent_ca(e, use_pool, batch_size, seed_args)
           batch_loss += loss
-          variables = self.parent_ca_model.trainable_weights
+          variables = self.parent_ca_model.trainable_variables
           grads = tape.gradient(loss, variables)
           grads = [g/(tf.norm(g)+1e-8) for g in grads]
           optimizer.apply_gradients(zip(grads, variables))
