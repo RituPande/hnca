@@ -219,9 +219,10 @@ class HCAImgModel(Model):
             break
             
         if lr_patience == 0:
-          optimizer = self._reload_optimizer(optimizer,\
-                                 self.parent_ca_model.trainable_variables,\
-                                    best_opt_weights)
+          #optimizer = self._reload_optimizer(optimizer,\
+          #                       self.parent_ca_model.trainable_variables,\
+          #                          best_opt_weights)
+          K.set_value(optimizer.lr, optimizer.lr * 0.1)
           print("New lr:",optimizer.lr)
           lr_patience = lr_patience_cfg
           self.set_weights(best_model_weights)
