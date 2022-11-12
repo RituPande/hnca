@@ -158,7 +158,7 @@ class HCAImgModel(Model):
     def pretrain_parent_ca(self, seed_args, lr=1e-3, num_epochs= 5000,\
                                    use_pool=True, batch_size=4,\
                                      es_patience_cfg=500, lr_patience_cfg=250,\
-                                      num_batches_per_epoch=8, ):
+                                      num_batches_per_epoch=8 ):
       
       optimizer = tf.keras.optimizers.Adam(learning_rate=lr, epsilon=1e-08, )
       history = []
@@ -254,7 +254,7 @@ class HCAImgModel(Model):
 
         if use_pool:
             x = self.parent_replay_buffer.sample_batch(batch_size)
-            if curr_epoch % 8 == 0:
+            if curr_epoch % seed_args['reseed_freq'] == 0:
               if seed_args['seed'] is not None :
                 k = np.random.randint(0, len(seed_args['seed']))
                 x[0] = seed_args['seed'][k]
