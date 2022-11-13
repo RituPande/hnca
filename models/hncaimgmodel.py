@@ -285,7 +285,7 @@ class HCAImgModel(Model):
 
         step_n = np.random.randint(self.parent_ca_min_steps, self.parent_ca_max_steps)
         with tf.GradientTape() as t:
-            x = self.parent_ca_model.step(x, None , n_steps=step_n, training_type='parent')
+            x = self.parent_ca_model.step(x, None , n_steps=step_n, update_rate=1.0,training_type='parent')
             #overflow loss forces the model to output values within -1.0 and 1.0
             overflow_loss = tf.reduce_sum(tf.abs(x - tf.clip_by_value(x, -1.0, 1.0)))
             loss = self.parent_ca_loss( self.parent_ca_target_img, x, is_image=True ) # + overflow_loss*1e2
