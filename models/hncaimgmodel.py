@@ -163,37 +163,24 @@ class HCAImgModel(Model):
       optimizer = tf.keras.optimizers.Adam(learning_rate=lr, epsilon=1e-08, )
       history = []
       seed = None
-      if seed_args['seed'] is not None:
-          seeds = seed_args['seed']
-          repeat_count = self.parent_replay_buffer.maxlen//len(seeds)
-          repeated_seeds = np.repeat(seeds, repeat_count, axis=0)
-          self.parent_replay_buffer.add(repeated_seeds)
-          add_count = self.parent_replay_buffer.maxlen % len(seeds)
-          if add_count: self.parent_replay_buffer.add(seeds[-add_count:,...])
-      else:
-          seeds = np.zeros((self.parent_replay_buffer.maxlen,self.parent_img_target_size,self.parent_img_target_size , self.parent_ca_model.n_channels) )
-          for i in tf.range(len(seeds)):
-                seeds[i] = create_parent_seed(self.leaf_img_target_size,\
-                                      self.leaf_img_target_size,\
-                                        seed_args['colors'],\
-                                           seed_args['bg'],\
-                                            self.signaling_factor,\
-                                             seed_args['num_circles'],\
-                                              seed_args['min_radius'],\
-                                                seed_args['max_radius'],\
-                                                  n_channels = self.parent_ca_model.n_channels)
-          
-          self.parent_replay_buffer.add(seeds)
-          
       
+      seeds = seed_args['seed']
+      repeat_count = self.parent_replay_buffer.maxlen//len(seeds)
+      repeated_seeds = np.repeat(seeds, repeat_count, axis=0)
+      self.parent_replay_buffer.add(repeated_seeds)
+      add_count = self.parent_replay_buffer.maxlen % len(seeds)
+      if add_count: self.parent_replay_buffer.add(seeds[-add_count:,...])
+                
+      self.parent_replay_buffer.add(seeds)
+          
       es_patience = es_patience_cfg
       lr_patience = lr_patience_cfg
       min_loss = np.inf
     
       for e in tqdm(tf.range(num_epochs)):
         batch_loss = 0
-        for _ in tf.range(num_batches_per_epoch):
-          loss, tape = self._loss_step_parent_ca(e, use_pool, batch_size, seed_args)
+        for b in tf.range(num_batches_per_epoch):
+          loss, tape = self._loss_step_parent_ca(e, b, use_pool, batch_size, seed_args)
           batch_loss += loss
           variables = self.parent_ca_model.trainable_variables
           grads = tape.gradient(loss, variables)
@@ -250,47 +237,42 @@ class HCAImgModel(Model):
 
         return loss, t
 
-    def _loss_step_parent_ca(self, curr_epoch, use_pool, batch_size, seed_args ):
+    def _loss_step_parent_ca(self, curr_epoch, batch_no,  use_pool, batch_size, seed_args ):
 
-        if use_pool:
-            x = self.parent_replay_buffer.sample_batch(batch_size)
-            if curr_epoch % seed_args['reseed_freq'] == 0:
-              if seed_args['seed'] is not None :
-                k = np.random.randint(0, len(seed_args['seed']))
-                x[0] = seed_args['seed'][k]
-              else:
-                x[0] = create_parent_seed(self.leaf_img_target_size,\
-                                      self.leaf_img_target_size,\
-                                        seed_args['colors'],\
-                                           seed_args['bg'],\
-                                            self.signaling_factor,\
-                                             seed_args['num_circles'],\
-                                              seed_args['min_radius'],\
-                                                seed_args['max_radius'],\
-                                                  n_channels = self.parent_ca_model.n_channels)
-        else:
-            if seed_args['seed'] is not None :
-              k = np.random.randint(0, len(seed_args['seed'])-1)
-              x[0] = seed_args['seed'][k]
-            else:
-              x[0] = create_parent_seed(self.leaf_img_target_size,\
-                                      self.leaf_img_target_size,\
-                                        seed_args['colors'],\
-                                           seed_args['bg'],\
-                                            self.signaling_factor,\
-                                             seed_args['num_circles'],\
-                                              seed_args['min_radius'],\
-                                                seed_args['max_radius'],\
-                                                  n_channels = self.parent_ca_model.n_channels)
+        if seed_args['random_seed_freq'] != 0 and \
+            curr_epoch >= seed_args['start_random_epoch'] and \
+              curr_epoch % seed_args['random_seed_freq'] == 0 and \
+                batch_no == 0:
 
+              print('replacing seed...')
+              k = np.random.randint(0, len(seed_args['seed']) )
+              seed_args['seed'][k] = create_parent_seed(self.leaf_img_target_size,\
+                                                        self.leaf_img_target_size,\
+                                                        seed_args['colors'],\
+                                                        seed_args['bg'],\
+                                                        self.signaling_factor,\
+                                                        seed_args['num_circles'],\
+                                                        seed_args['min_radius'],\
+                                                        seed_args['max_radius'],\
+                                                         n_channels = self.parent_ca_model.n_channels)
+          
+
+        x = self.parent_replay_buffer.sample_batch(batch_size)
+        if seed_args['reseed_freq'] != 0 and \
+            curr_epoch % seed_args['reseed_freq'] == 0:
+
+          k = np.random.randint(0, len(seed_args['seed']))
+          x[0] = seed_args['seed'][k]
+          
+        
         step_n = np.random.randint(self.parent_ca_min_steps, self.parent_ca_max_steps)
         with tf.GradientTape() as t:
             x = self.parent_ca_model.step(x, None , n_steps=step_n, update_rate=1.0,training_type='parent')
             #overflow loss forces the model to output values within -1.0 and 1.0
             overflow_loss = tf.reduce_sum(tf.abs(x - tf.clip_by_value(x, -1.0, 1.0)))
             loss = self.parent_ca_loss( self.parent_ca_target_img, x, is_image=True ) # + overflow_loss*1e2
-        if use_pool :
-          self.parent_replay_buffer.add(x.numpy())
+       
+        self.parent_replay_buffer.add(x.numpy())
 
         return loss, t
 
