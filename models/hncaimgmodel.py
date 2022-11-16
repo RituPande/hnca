@@ -155,7 +155,7 @@ class HCAImgModel(Model):
         
         return history
 
-    def pretrain_parent_ca(self, seed_args, lr=1e-3, num_epochs= 5000,\
+    def pretrain_parent_ca(self, seed_args, start_epoch=0, lr=1e-3, num_epochs= 5000,\
                                    use_pool=True, batch_size=4,\
                                      es_patience_cfg=500, lr_patience_cfg=250,\
                                       num_batches_per_epoch=8 ):
@@ -177,7 +177,7 @@ class HCAImgModel(Model):
       lr_patience = lr_patience_cfg
       min_loss = np.inf
     
-      for e in tqdm(tf.range(num_epochs)):
+      for e in tqdm(tf.range(start_epoch, num_epochs)):
         batch_loss = 0
         for b in tf.range(num_batches_per_epoch):
           loss, tape = self._loss_step_parent_ca(e, b, use_pool, batch_size, seed_args)
@@ -196,7 +196,8 @@ class HCAImgModel(Model):
           es_patience = es_patience_cfg
           lr_patience = lr_patience_cfg
           best_model_weights = self.get_weights()
-          best_opt_weights = optimizer.get_weights()
+          self.parent_ca_model.save_weights(f"./parent_ca_weights_{e}_{optimizer.lr}.h5", )
+          #best_opt_weights = optimizer.get_weights()
         else:
           es_patience -= 1
           lr_patience -= 1
