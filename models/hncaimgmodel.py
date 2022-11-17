@@ -62,7 +62,7 @@ class HCAImgModel(Model):
         self.parent_ca_target_img = load_image(parent_ca_target)[None,:,:,:3]
 
         self.leaf_replay_buffer = ReplayBuffer()
-        self.parent_replay_buffer = ReplayBuffer()
+        self.parent_replay_buffer = ReplayBuffer(max_len=10000)
         self.leaf_replay_buffer.add( self.leaf_ca_model.make_seed(size=self.leaf_img_target_size, n=256))
 
     def _init_loss_objects(self, leaf_ca_loss_type, parent_ca_loss_type ):
