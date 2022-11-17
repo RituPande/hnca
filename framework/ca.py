@@ -42,6 +42,8 @@ class ImgCA(Model):
 
         self._init_ca_class_members(n_channels, n_schannels, target_size, n_features )
         self._init_ca_layers()
+        #dummy call to build the model
+        self._build(n_channels, n_schannels, target_size)
         
    
     def _init_ca_class_members(self, n_channels ,n_schannels, target_size, n_features):
@@ -73,6 +75,11 @@ class ImgCA(Model):
                 use_bias=False,\
                 kernel_initializer=tf.keras.initializers.Zeros())
 
+
+    def _build(self, n_channels, n_schannels, target_size):
+        x = np.zeros((1,target_size,target_size, n_channels) )
+        s = np.zeros((1,target_size,target_size, n_schannels) ) if n_schannels else None 
+        self(x,s)
 
 
     def _circular_pad( self, x, pad  ):
