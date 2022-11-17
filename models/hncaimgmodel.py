@@ -196,7 +196,7 @@ class HCAImgModel(Model):
           es_patience = es_patience_cfg
           lr_patience = lr_patience_cfg
           best_model_weights = self.get_weights()
-          self.parent_ca_model.save_weights(f"./parent_ca_weights_{e}_{optimizer.lr}.h5", )
+          self.parent_ca_model.save_weights(f"gdrive/MyDrive/chkpt/parent_ca_weights_{e}_{optimizer.lr.numpy()}_chkpt.h5", )
           #best_opt_weights = optimizer.get_weights()
         else:
           es_patience -= 1
