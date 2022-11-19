@@ -1,7 +1,7 @@
 
 import tensorflow as tf
 from tensorflow import keras
-from  keras.layers import  Conv2D, DepthwiseConv2D,Input,Concatenate
+from  keras.layers import  Conv2D, DepthwiseConv2D,Input,Concatenate, BatchNormalization
 from keras.models import Model
 import numpy as np
 
@@ -57,6 +57,8 @@ class ImgCA(Model):
         if self.n_schannels > 0:
             self.combined_inp = Concatenate(axis=-1)
 
+        self.bn0 = BatchNormalization()
+
         self.perception = DepthwiseConv2D(\
             kernel_size=3,\
                 padding='valid',\
@@ -65,10 +67,14 @@ class ImgCA(Model):
 
         self.perception.trainable = False
 
+        self.bn1 = BatchNormalization()
+
         self.features =  Conv2D(filters=self.n_features,\
                 kernel_size=1,\
                 bias_initializer='glorot_uniform',\
                 activation = 'relu') 
+
+        self.bn2 = BatchNormalization()
 
         self.new_state = Conv2D(filters=self.n_channels + self.n_schannels,\
             kernel_size=1,\
@@ -104,8 +110,11 @@ class ImgCA(Model):
             x = self.combined_inp([x,s])
 
         x_pad = self._circular_pad(x,1)
-        y = self.perception(x_pad)
+        y = self.bn0(x_pad)
+        y = self.perception(y)
+        y = self.bn1(y)
         y = self.features(y)
+        y = self.bn2(y)
         y = self.new_state(y)
         
         y = y*udpate_mask + x
