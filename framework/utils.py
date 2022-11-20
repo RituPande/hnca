@@ -25,7 +25,7 @@ def to_rgba(x):
 #  return tf.clip_by_value(x[..., 3:4], 0.0, 1.0)
 
 def to_rgb(x):
-  return x[..., :3]+ 0.5
+  return x[..., :3]
 
 
 def plot_loss(history1, history2=None, y_label1='Leaf CA history', y_label2=None):
