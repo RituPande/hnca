@@ -199,7 +199,7 @@ class HCAImgModel(Model):
           best_model_weights = self.get_weights()
           for filename in glob.glob("gdrive/MyDrive/chkpt/parent_ca_wghts*"):os.remove(filename)
      
-          self.parent_ca_model.save_weights(f"gdrive/MyDrive/chkpt/parent_ca_wghts_{e}_{optimizer.lr.numpy():0.2e}_chkpt.h5" )
+          self.parent_ca_model.save_weights(f"gdrive/MyDrive/chkpt/parent_ca_wghts_{e}_{optimizer.lr.numpy():0.2e}_{min_loss.numpy()}.h5" )
           #best_opt_weights = optimizer.get_weights()
         else:
           es_patience -= 1
