@@ -105,7 +105,7 @@ class ImgCA(Model):
             x = self.combined_inp([x,s])
 
         x_pad = self._circular_pad(x,1)
-        y = self.perception(y)
+        y = self.perception(x_pad)
         y = self.features(y)
         y = self.new_state(y)
         
