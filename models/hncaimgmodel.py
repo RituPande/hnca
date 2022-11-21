@@ -159,7 +159,7 @@ class HCAImgModel(Model):
     def pretrain_parent_ca(self, seed_args, start_epoch=0, lr=1e-3, num_epochs= 5000,\
                                    use_pool=True, batch_size=4,\
                                      es_patience_cfg=500, lr_patience_cfg=250,\
-                                      num_batches_per_epoch=8 ):
+                                      num_batches_per_epoch=8, min_loss=np.inf ):
       
       optimizer = tf.keras.optimizers.Adam(learning_rate=lr, epsilon=1e-08, )
       history = []
@@ -176,8 +176,7 @@ class HCAImgModel(Model):
           
       es_patience = es_patience_cfg
       lr_patience = lr_patience_cfg
-      min_loss = np.inf
-    
+          
       for e in tqdm(tf.range(start=start_epoch, limit=num_epochs)):
         batch_loss = 0
         for b in tf.range(num_batches_per_epoch):
@@ -199,7 +198,7 @@ class HCAImgModel(Model):
           best_model_weights = self.get_weights()
           for filename in glob.glob("gdrive/MyDrive/chkpt/parent_ca_wghts*"):os.remove(filename)
      
-          self.parent_ca_model.save_weights(f"gdrive/MyDrive/chkpt/parent_ca_wghts_{e}_{optimizer.lr.numpy():0.2e}_{min_loss.numpy()}.h5" )
+          self.parent_ca_model.save_weights(f"gdrive/MyDrive/chkpt/parent_ca_wghts_{e}_{optimizer.lr.numpy():0.2e}_{min_loss.numpy():0.2f}_chkpt.h5" )
           #best_opt_weights = optimizer.get_weights()
         else:
           es_patience -= 1
