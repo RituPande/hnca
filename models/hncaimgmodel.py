@@ -176,7 +176,8 @@ class HCAImgModel(Model):
           
       es_patience = es_patience_cfg
       lr_patience = lr_patience_cfg
-          
+      best_model_weights = self.get_weights()
+      
       for e in tqdm(tf.range(start=start_epoch, limit=num_epochs)):
         batch_loss = 0
         for b in tf.range(num_batches_per_epoch):
