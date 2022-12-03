@@ -50,7 +50,7 @@ class HCAImgModel(Model):
         self.leaf_img_target_size = 128
         self.parent_img_target_size = 32
         # n_features for leaf_ca = (n_channels + n_schannels)*4
-        self.leaf_ca_model =  ImgCA(n_channels=12,n_schannels=4,target_size=self.leaf_img_target_size, n_features = 64 )
+        self.leaf_ca_model =  ImgCA(n_channels=8,n_schannels=4,target_size=self.leaf_img_target_size, n_features = 64 )
         self.parent_ca_model =  ImgCA(n_channels=12,n_schannels=0, target_size=self.parent_img_target_size, n_features=64 )
         self.leaf_ca_min_steps = leaf_ca_min_steps
         self.leaf_ca_max_steps = leaf_ca_max_steps
