@@ -133,7 +133,6 @@ class ImgCA(Model):
     
         return x
     
-    # TODO: review this.
     def make_seed(self, size, n=1):
         x = np.ones((n, size, size, self.n_channels), np.float32)
         if self.n_schannels > 0:
