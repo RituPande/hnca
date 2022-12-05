@@ -243,24 +243,7 @@ class HCAImgModel(Model):
 
     def _loss_step_parent_ca(self, curr_epoch, batch_no,  use_pool, batch_size, seed_args ):
 
-        if seed_args['random_seed_freq'] != 0 and \
-            curr_epoch >= seed_args['start_random_epoch'] and \
-              curr_epoch % seed_args['random_seed_freq'] == 0 and \
-                batch_no == 0:
-
-              print('replacing seed...')
-              k = np.random.randint(0, len(seed_args['seed']) )
-              seed_args['seed'][k] = create_parent_seed(self.leaf_img_target_size,\
-                                                        self.leaf_img_target_size,\
-                                                        seed_args['colors'],\
-                                                        seed_args['bg'],\
-                                                        self.signaling_factor,\
-                                                        seed_args['num_circles'],\
-                                                        seed_args['min_radius'],\
-                                                        seed_args['max_radius'],\
-                                                         n_channels = self.parent_ca_model.n_channels)
-          
-
+        
         x = self.parent_replay_buffer.sample_batch(batch_size)
         if seed_args['reseed_freq'] != 0 and \
             curr_epoch % seed_args['reseed_freq'] == 0:
