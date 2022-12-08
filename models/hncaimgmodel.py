@@ -39,7 +39,7 @@ class HCAImgModel(Model):
         self._init_ca_class_members(leaf_ca_target,parent_ca_target,\
                       leaf_ca_min_steps, leaf_ca_max_steps,\
                         parent_ca_min_steps, parent_ca_max_steps,\
-                           hca_min_steps=32, hca_max_steps=96)
+                           hca_min_steps, hca_max_steps)
 
         self._init_loss_objects(leaf_ca_loss_type, parent_ca_loss_type )
 
@@ -281,6 +281,7 @@ class HCAImgModel(Model):
             leaf_x = self.leaf_ca_model.make_seed(self.leaf_img_target_size)
 
         step_n = np.random.randint(self.hca_min_steps, self.hca_max_steps)
+        
         with tf.GradientTape() as t:
             leaf_x, parent_x = self(leaf_x, None )
             for _ in tf.range(step_n-1):
