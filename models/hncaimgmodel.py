@@ -29,13 +29,17 @@ class HCAImgModel(Model):
 
     def __init__( self,\
                  leaf_ca_target,parent_ca_target,\
-                      leaf_ca_min_steps=32, leaf_ca_max_steps=96,  parent_ca_min_steps=32, parent_ca_max_steps=96,\
+                      leaf_ca_min_steps=32, leaf_ca_max_steps=96, \
+                       parent_ca_min_steps=32, parent_ca_max_steps=96,\
+                          hca_min_steps=32, hca_max_steps=96,\
                             leaf_ca_loss_type='ot', parent_ca_loss_type='mse' ):
 
         super(HCAImgModel,self).__init__()
 
         self._init_ca_class_members(leaf_ca_target,parent_ca_target,\
-                      leaf_ca_min_steps, leaf_ca_max_steps,  parent_ca_min_steps, parent_ca_max_steps)
+                      leaf_ca_min_steps, leaf_ca_max_steps,\
+                        parent_ca_min_steps, parent_ca_max_steps,\
+                           hca_min_steps=32, hca_max_steps=96)
 
         self._init_loss_objects(leaf_ca_loss_type, parent_ca_loss_type )
 
@@ -45,7 +49,9 @@ class HCAImgModel(Model):
 
                       
     def _init_ca_class_members(self, leaf_ca_target,parent_ca_target,\
-                      leaf_ca_min_steps, leaf_ca_max_steps, parent_ca_min_steps, parent_ca_max_steps):
+                      leaf_ca_min_steps, leaf_ca_max_steps,\
+                         parent_ca_min_steps, parent_ca_max_steps,\
+                           hca_min_steps=32, hca_max_steps=96  ):
                             
         self.leaf_img_target_size = 128
         self.parent_img_target_size = 32
@@ -56,6 +62,8 @@ class HCAImgModel(Model):
         self.leaf_ca_max_steps = leaf_ca_max_steps
         self.parent_ca_min_steps = parent_ca_min_steps
         self.parent_ca_max_steps = parent_ca_max_steps
+        self.hca_min_steps = hca_min_steps
+        self.hca_max_steps = hca_max_steps
         self.signaling_factor = 4
 
         self.leaf_ca_target_img = load_image(leaf_ca_target)[None,:,:,:3]
@@ -119,7 +127,7 @@ class HCAImgModel(Model):
             leaf_x, s = tf.split(leaf_x, [self.leaf_ca_model.n_channels, -1], axis=-1)
             leaf_x = tf.stop_gradient(self.leaf_ca_model.step(leaf_x,s,n_steps=step_n, training_type='hca'))
             parent_x = self.feedback(leaf_x)
-            parent_x = self.parent_ca_model.step(parent_x,s=None,n_steps=1,training_type='hca')
+            parent_x = self.parent_ca_model.step(parent_x,s=None,n_steps=1, update_rate=1.0, training_type='hca')
 
         #Get signal from the parent CA
         s = self._get_signal(parent_x)
@@ -136,7 +144,7 @@ class HCAImgModel(Model):
         # report pooled leaf CA channels back to the parent
         parent_x = self.feedback(leaf_x)
         
-        parent_x = self.parent_ca_model.step(parent_x, s=None,n_steps=1,training_type='hca')
+        parent_x = self.parent_ca_model.step(parent_x, s=None, n_steps=1, update_rate=1.0, training_type='hca')
 
         return leaf_x, parent_x 
 
@@ -272,7 +280,7 @@ class HCAImgModel(Model):
         else:
             leaf_x = self.leaf_ca_model.make_seed(self.leaf_img_target_size)
 
-        step_n = np.random.randint(self.parent_ca_min_steps, self.parent_ca_max_steps)
+        step_n = np.random.randint(self.hca_min_steps, self.hca_max_steps)
         with tf.GradientTape() as t:
             leaf_x, parent_x = self(leaf_x, None )
             for _ in tf.range(step_n-1):
