@@ -56,7 +56,7 @@ class HCAImgModel(Model):
         self.leaf_img_target_size = 128
         self.parent_img_target_size = 32
         # n_features for leaf_ca = (n_channels + n_schannels)*4
-        self.leaf_ca_model =  ImgCA(n_channels=8,n_schannels=4,target_size=self.leaf_img_target_size, n_features = 64 )
+        self.leaf_ca_model =  ImgCA(n_channels=3,n_schannels=9,target_size=self.leaf_img_target_size, n_features = 64 )
         self.parent_ca_model =  ImgCA(n_channels=12,n_schannels=0, target_size=self.parent_img_target_size, n_features=64 )
         self.leaf_ca_min_steps = leaf_ca_min_steps
         self.leaf_ca_max_steps = leaf_ca_max_steps
@@ -92,7 +92,7 @@ class HCAImgModel(Model):
 
     def _init_fs_layers( self  ):
 
-        self.signal_creator =  Conv2D(filters=4,\
+        self.signal_creator =  Conv2D(filters=self.leaf_ca_model.n_schannels,\
                                         kernel_size=1,\
                                             bias_initializer='glorot_uniform',\
                                                 kernel_initializer=tf.keras.initializers.Zeros()) # use linear activation
@@ -101,7 +101,7 @@ class HCAImgModel(Model):
         self.upscale_signal = UpSampling2D(size=(self.signaling_factor,self.signaling_factor))
 
         initializer = tf.random_uniform_initializer(minval=-1.0 , maxval=1.0,  )
-        self.signal_lr = tf.Variable( initializer(shape=[1], dtype=tf.float32),  trainable=True)
+        #self.signal_lr = tf.Variable( initializer(shape=[1], dtype=tf.float32),  trainable=True)
 
 
     def _get_signal(self, x  ):
@@ -137,7 +137,7 @@ class HCAImgModel(Model):
 
         # add signal from parent CA to signal channels of leaf CA
         s += orig_signal* self.signal_lr
-
+        #s = tf.math.tanh(s)*orig_signal
         # iterate through all n steps of leaf CA
         leaf_x = self.leaf_ca_model.step(features, s=s, n_steps=1, training_type='hca')
 
