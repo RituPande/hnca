@@ -101,7 +101,7 @@ class HCAImgModel(Model):
         self.upscale_signal = UpSampling2D(size=(self.signaling_factor,self.signaling_factor))
 
         initializer = tf.random_uniform_initializer(minval=-1.0 , maxval=1.0,  )
-        #self.signal_lr = tf.Variable( initializer(shape=[1], dtype=tf.float32),  trainable=True)
+        self.signal_lr = tf.Variable( initializer(shape=[1], dtype=tf.float32),  trainable=True)
 
 
     def _get_signal(self, x  ):
