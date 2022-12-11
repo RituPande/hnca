@@ -136,7 +136,7 @@ class HCAImgModel(Model):
         features, orig_signal = tf.split(leaf_x, [self.leaf_ca_model.n_channels, -1], axis=3 )
 
         # add signal from parent CA to signal channels of leaf CA
-        s += orig_signal* self.signal_lr
+        s = orig_signal + self.signal_lr*s
         #s = tf.math.tanh(s)*orig_signal
         # iterate through all n steps of leaf CA
         leaf_x = self.leaf_ca_model.step(features, s=s, n_steps=1, training_type='hca')
