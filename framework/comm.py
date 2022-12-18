@@ -6,7 +6,7 @@ from keras.layers import Conv2D,AveragePooling2D,UpSampling2D
 
 class CAComm(Model):
     def __init__(self, n_leaf_ca_schannels, signal_factor  ):
-        super(Comm, self).__init__()
+        super(CAComm, self).__init__()
         self.signal_creator =  Conv2D(filters=n_leaf_ca_schannels,\
                                         kernel_size=1,\
                                             bias_initializer='glorot_uniform',\
