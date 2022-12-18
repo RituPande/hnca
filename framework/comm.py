@@ -20,7 +20,7 @@ class Comm(Model):
 
     def call(self, parent_x, leaf_x, use_rgb_in_signal_src=False, use_rgb_in_signal_dst=False ):
 
-      x = parent_x
+      s = parent_x
       if not use_rgb_in_signal_src:
         split_sizes = [3, -1] # remove latent channels from RGB channels 
         _, s  = tf.split(parent_x, split_sizes, axis=-1 )
@@ -33,9 +33,9 @@ class Comm(Model):
         _ , orig_signal = tf.split(leaf_x, [self.leaf_ca_model.n_channels, -1], axis=3 )
 
       # add signal from parent CA to signal channels of leaf CA
-      s = orig_signal + self.signal_lr*s
+      new_x = orig_signal + self.signal_lr*s
 
-      return s
+      return new_x
 
 
 
