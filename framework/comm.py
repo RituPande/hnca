@@ -33,9 +33,9 @@ class Comm(Model):
         _ , orig_signal = tf.split(leaf_x, [self.leaf_ca_model.n_channels, -1], axis=3 )
 
       # add signal from parent CA to signal channels of leaf CA
-      new_x = orig_signal + self.signal_lr*s
+      new_leaf_x = orig_signal + self.signal_lr*s
 
-      return new_x
+      return new_leaf_x
 
 
 
