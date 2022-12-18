@@ -4,7 +4,7 @@ from tensorflow import keras
 from keras import Model
 from keras.layers import Conv2D,AveragePooling2D,UpSampling2D
 
-class Comm(Model):
+class CAComm(Model):
     def __init__(self, n_leaf_ca_schannels, signal_factor  ):
         super(Comm, self).__init__()
         self.signal_creator =  Conv2D(filters=n_leaf_ca_schannels,\
