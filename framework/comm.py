@@ -28,7 +28,10 @@ class CAComm(Model):
         self.feedback = AveragePooling2D(pool_size=(signal_factor,signal_factor), strides=signal_factor )
         self.upscale_signal = UpSampling2D(size=(signal_factor,signal_factor))
         initializer = tf.random_uniform_initializer(minval=-1.0 , maxval=1.0  )
-        self.signal_lr = tf.Variable( initializer(shape=[1], dtype=tf.float32),  trainable=True)
+
+        n_features =  n_leaf_ca_schannels \
+            if not use_all_ch_in_signal_dst else (n_leaf_ca_channels + n_leaf_ca_schannels)
+        self.signal_lr = tf.Variable( initializer(shape=[1,n_features], dtype=tf.float32),  trainable=True)
 
 
     def _create_signal(self, x):
