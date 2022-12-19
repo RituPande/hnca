@@ -2,11 +2,11 @@ from hnca.framework.ca import ImgCA
 from hnca.framework.losses import StyleLoss, MSELoss
 from hnca.framework.utils import load_image, show_image, plot_loss, create_parent_seed 
 from hnca.framework.types import ReplayBuffer
+from hnca.framework.comm import CAComm
 import tensorflow as tf
 import numpy as np
 from tensorflow import keras
 from keras import Model
-from keras.layers import UpSampling2D,Conv2D,AveragePooling2D
 from tqdm import tqdm
 import keras.backend as K
 import os, glob
@@ -32,40 +32,55 @@ class HCAImgModel(Model):
                       leaf_ca_min_steps=32, leaf_ca_max_steps=96, \
                        parent_ca_min_steps=32, parent_ca_max_steps=96,\
                           hca_min_steps=32, hca_max_steps=96,\
-                            leaf_ca_loss_type='ot', parent_ca_loss_type='mse' ):
+                            leaf_ca_loss_type='ot', parent_ca_loss_type='mse',\
+                              n_leaf_ca_channels=3, n_leaf_ca_schannels=9,
+                                n_parent_ca_channels= 12 ):
 
         super(HCAImgModel,self).__init__()
 
         self._init_ca_class_members(leaf_ca_target,parent_ca_target,\
                       leaf_ca_min_steps, leaf_ca_max_steps,\
                         parent_ca_min_steps, parent_ca_max_steps,\
-                           hca_min_steps, hca_max_steps)
+                           hca_min_steps, hca_max_steps, \
+                            n_leaf_ca_channels, n_leaf_ca_schannels
+                              n_parent_ca_channels  )
 
         self._init_loss_objects(leaf_ca_loss_type, parent_ca_loss_type )
 
-        self._init_fs_layers()
+            
         
-        
-
                       
     def _init_ca_class_members(self, leaf_ca_target,parent_ca_target,\
                       leaf_ca_min_steps, leaf_ca_max_steps,\
                          parent_ca_min_steps, parent_ca_max_steps,\
-                           hca_min_steps=32, hca_max_steps=96  ):
+                           hca_min_steps, hca_max_steps,\
+                              n_leaf_ca_channels, n_leaf_ca_schannels,\
+                                n_parent_ca_channels  ):
                             
         self.leaf_img_target_size = 128
         self.parent_img_target_size = 32
         # n_features for leaf_ca = (n_channels + n_schannels)*4
-        self.leaf_ca_model =  ImgCA(n_channels=3,n_schannels=9,target_size=self.leaf_img_target_size, n_features = 64 )
-        self.parent_ca_model =  ImgCA(n_channels=12,n_schannels=0, target_size=self.parent_img_target_size, n_features=64 )
+        self.leaf_ca_model =  ImgCA(n_channels=n_leaf_ca_channels,\
+                                        n_schannels=n_leaf_ca_schannels,\
+                                          target_size=self.leaf_img_target_size,\
+                                             n_features = 64 )
+        self.parent_ca_model =  ImgCA(n_channels=n_parent_ca_channels,\
+                                        n_schannels=0,\
+                                          target_size=self.parent_img_target_size, \
+                                             n_features=64 )
+
+        self.ca_comm_model = CAComm( n_leaf_ca_channels=n_leaf_ca_channels,\
+                                         n_leaf_ca_schannels=n_leaf_ca_schannels, \
+                                                  signal_factor=4,\
+                                                   use_all_ch_in_signal_src=True,\
+                                                      use_all_ch_in_signal_dst=False  )
         self.leaf_ca_min_steps = leaf_ca_min_steps
         self.leaf_ca_max_steps = leaf_ca_max_steps
         self.parent_ca_min_steps = parent_ca_min_steps
         self.parent_ca_max_steps = parent_ca_max_steps
         self.hca_min_steps = hca_min_steps
         self.hca_max_steps = hca_max_steps
-        self.signaling_factor = 4
-
+        
         self.leaf_ca_target_img = load_image(leaf_ca_target)[None,:,:,:3]
         self.parent_ca_target_img = load_image(parent_ca_target)[None,:,:,:3]
 
@@ -90,36 +105,6 @@ class HCAImgModel(Model):
             print("Parent CA Loss type not supported")
 
 
-    def _init_fs_layers( self  ):
-
-        self.signal_creator =  Conv2D(filters=self.leaf_ca_model.n_schannels,\
-                                        kernel_size=1,\
-                                            bias_initializer='glorot_uniform',\
-                                                kernel_initializer=tf.keras.initializers.Zeros()) # use linear activation
-                                                                                                  # should we use_bias?
-        self.feedback = AveragePooling2D(pool_size=(self.signaling_factor,self.signaling_factor), strides= self.signaling_factor )
-        self.upscale_signal = UpSampling2D(size=(self.signaling_factor,self.signaling_factor))
-
-        initializer = tf.random_uniform_initializer(minval=-1.0 , maxval=1.0,  )
-        self.signal_lr = tf.Variable( initializer(shape=[1], dtype=tf.float32),  trainable=True)
-
-
-    def _get_signal(self, x  ):
-            
-        split_sizes = [3, -1] # remove latent channels from RGB channels 
-        _, s  = tf.split(x, split_sizes, axis=-1 )
-        s = self.signal_creator(s)
-        s = self.upscale_signal(s)
-        return s
-
-
-    def _reload_optimizer(self,optimizer, grad_vars,best_opt_weights, reduce_lr=True):
-        zero_grads = [tf.zeros_like(w) for w in grad_vars]
-        optimizer.apply_gradients(zip(zero_grads, grad_vars))
-        optimizer.set_weights(best_opt_weights)
-        if reduce_lr: K.set_value(optimizer.lr, optimizer.lr * 0.1)
-        return optimizer
-
     def call(self, leaf_x, parent_x=None ):
 
         step_n = np.random.randint(self.leaf_ca_min_steps, self.leaf_ca_max_steps)
@@ -129,21 +114,16 @@ class HCAImgModel(Model):
             parent_x = self.feedback(leaf_x)
             parent_x = self.parent_ca_model.step(parent_x,s=None,n_steps=1, update_rate=1.0, training_type='hca')
 
-        #Get signal from the parent CA
-        s = self._get_signal(parent_x)
-
-        #  get leaf CA features and signals
-        features, orig_signal = tf.split(leaf_x, [self.leaf_ca_model.n_channels, -1], axis=3 )
-
-        # add signal from parent CA to signal channels of leaf CA
-        s = orig_signal + self.signal_lr*s
-        #s = tf.math.tanh(s)*orig_signal
-        # iterate through all n steps of leaf CA
-        leaf_x = self.leaf_ca_model.step(features, s=s, n_steps=1, training_type='hca')
-
-        # report pooled leaf CA channels back to the parent
-        parent_x = self.feedback(leaf_x)
+        #Get signal from the parent CA and mix with leaf CA 
+        leaf_channels, leaf_schannels = self.ca_comm_model( parent_x, leaf_x,\
+                                                              comm_type='signal')
+                                                      
         
+        leaf_x = self.leaf_ca_model.step(leaf_channels, s=leaf_schannels, n_steps=1, training_type='hca')
+
+        # report pooled leaf CA channels back to the 
+        parent_x = self.ca_comm_model(None, leaf_x , comm_type='feedback' )
+                
         parent_x = self.parent_ca_model.step(parent_x, s=None, n_steps=1, update_rate=1.0, training_type='hca')
 
         return leaf_x, parent_x 
