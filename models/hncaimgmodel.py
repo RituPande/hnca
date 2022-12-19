@@ -279,10 +279,10 @@ class HCAImgModel(Model):
             hca_history.append(loss_hca.numpy())
             parent_ca_history.append(loss_parent.numpy())
             leaf_ca_history.append(loss_leaf.numpy())
-            
-            gradients_hca = hca_tape.gradient(loss_hca, self.trainable_variables) 
+            training_vars = self.parent_ca_model.trainable_variables + self.ca_comm_model.trainable_variables
+            gradients_hca = hca_tape.gradient(loss_hca,  training_vars ) 
             grads = [g/(tf.norm(g)+1e-8) for g in gradients_hca]
-            optimizer_hca.apply_gradients(zip(grads, self.trainable_variables))
+            optimizer_hca.apply_gradients(zip(grads, training_vars))
 
             if leaf_training_freq!=0 and  e % leaf_training_freq == 0:
               loss_leaf_ca,leaf_ca_tape = self._loss_step_leaf_ca( e,use_pool, batch_size )
