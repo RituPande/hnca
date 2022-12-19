@@ -26,6 +26,7 @@ class CAComm(Model):
         _, s  = tf.split(parent_x, split_sizes, axis=-1 )
             
       s = self.signal_creator(s)
+      
       s = self.upscale_signal(s)
 
       orig_signal = leaf_x
