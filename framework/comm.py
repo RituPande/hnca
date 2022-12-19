@@ -65,6 +65,9 @@ class CAComm(Model):
         out = self._mix_signal(leaf_x, s)
       elif comm_type == 'feedback':
         out = self.feedback(leaf_x)
+      else:
+        print("Invalid comm_type:",comm_type)
+        out = None 
 
       return out
 
