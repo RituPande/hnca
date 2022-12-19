@@ -42,7 +42,7 @@ class HCAImgModel(Model):
                       leaf_ca_min_steps, leaf_ca_max_steps,\
                         parent_ca_min_steps, parent_ca_max_steps,\
                            hca_min_steps, hca_max_steps, \
-                            n_leaf_ca_channels, n_leaf_ca_schannels
+                            n_leaf_ca_channels, n_leaf_ca_schannels,\
                               n_parent_ca_channels  )
 
         self._init_loss_objects(leaf_ca_loss_type, parent_ca_loss_type )
