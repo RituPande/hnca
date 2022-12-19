@@ -47,7 +47,7 @@ class CAComm(Model):
 
       orig_signal = leaf_x
       if not self.use_all_ch_in_signal_dst:
-        orig_ch , orig_signal = tf.split(leaf_x, [self.leaf_ca_model.n_channels, -1], axis=-1 )
+        orig_ch , orig_signal = tf.split(leaf_x, [self.n_leaf_ca_channels, -1], axis=-1 )
 
       # add signal from parent CA to signal channels of leaf CA
       new_signal_ch = orig_signal + self.signal_lr*s
