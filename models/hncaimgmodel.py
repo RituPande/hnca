@@ -34,29 +34,12 @@ class HCAImgModel(Model):
                           hca_min_steps=32, hca_max_steps=96,\
                             leaf_ca_loss_type='ot', parent_ca_loss_type='mse',\
                               n_leaf_ca_channels=3, n_leaf_ca_schannels=9,
-                                n_parent_ca_channels= 12 ):
+                                n_parent_ca_channels= 12, \
+                                use_all_ch_in_signal_src=True,\
+                                  use_all_ch_in_signal_dst=False ):
 
         super(HCAImgModel,self).__init__()
 
-        self._init_ca_class_members(leaf_ca_target,parent_ca_target,\
-                      leaf_ca_min_steps, leaf_ca_max_steps,\
-                        parent_ca_min_steps, parent_ca_max_steps,\
-                           hca_min_steps, hca_max_steps, \
-                            n_leaf_ca_channels, n_leaf_ca_schannels,\
-                              n_parent_ca_channels  )
-
-        self._init_loss_objects(leaf_ca_loss_type, parent_ca_loss_type )
-
-            
-        
-                      
-    def _init_ca_class_members(self, leaf_ca_target,parent_ca_target,\
-                      leaf_ca_min_steps, leaf_ca_max_steps,\
-                         parent_ca_min_steps, parent_ca_max_steps,\
-                           hca_min_steps, hca_max_steps,\
-                              n_leaf_ca_channels, n_leaf_ca_schannels,\
-                                n_parent_ca_channels  ):
-                            
         self.leaf_img_target_size = 128
         self.parent_img_target_size = 32
         # n_features for leaf_ca = (n_channels + n_schannels)*4
@@ -72,8 +55,8 @@ class HCAImgModel(Model):
         self.ca_comm_model = CAComm( n_leaf_ca_channels=n_leaf_ca_channels,\
                                          n_leaf_ca_schannels=n_leaf_ca_schannels, \
                                                   signal_factor=4,\
-                                                   use_all_ch_in_signal_src=True,\
-                                                      use_all_ch_in_signal_dst=False  )
+                                                    use_all_ch_in_signal_src=use_all_ch_in_signal_src,\
+                                                      use_all_ch_in_signal_dst=use_all_ch_in_signal_dst  )
         self.leaf_ca_min_steps = leaf_ca_min_steps
         self.leaf_ca_max_steps = leaf_ca_max_steps
         self.parent_ca_min_steps = parent_ca_min_steps
@@ -88,6 +71,9 @@ class HCAImgModel(Model):
         self.parent_replay_buffer = ReplayBuffer(max_len=20000)
         self.leaf_replay_buffer.add( self.leaf_ca_model.make_seed(size=self.leaf_img_target_size, n=256))
 
+        self._init_loss_objects(leaf_ca_loss_type, parent_ca_loss_type )
+
+        
     def _init_loss_objects(self, leaf_ca_loss_type, parent_ca_loss_type ):
 
         if leaf_ca_loss_type in ['gram','ot']:
