@@ -36,7 +36,8 @@ class HCAImgModel(Model):
                               n_leaf_ca_channels=3, n_leaf_ca_schannels=9,
                                 n_parent_ca_channels= 12, \
                                 use_all_ch_in_signal_src=True,\
-                                  use_all_ch_in_signal_dst=False ):
+                                  use_all_ch_in_signal_dst=False, \
+                                    n_sig_creation_layers=1 ):
 
         super(HCAImgModel,self).__init__()
 
@@ -56,7 +57,8 @@ class HCAImgModel(Model):
                                          n_leaf_ca_schannels=n_leaf_ca_schannels, \
                                                   signal_factor=4,\
                                                     use_all_ch_in_signal_src=use_all_ch_in_signal_src,\
-                                                      use_all_ch_in_signal_dst=use_all_ch_in_signal_dst  )
+                                                      use_all_ch_in_signal_dst=use_all_ch_in_signal_dst,\
+                                                      n_sig_n_sig_creation_layers=n_sig_creation_layers  )
         self.leaf_ca_min_steps = leaf_ca_min_steps
         self.leaf_ca_max_steps = leaf_ca_max_steps
         self.parent_ca_min_steps = parent_ca_min_steps

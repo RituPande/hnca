@@ -8,7 +8,7 @@ from keras.layers import Conv2D,AveragePooling2D,UpSampling2D
 class CAComm(Model):
     def __init__(self, n_leaf_ca_channels, n_leaf_ca_schannels, signal_factor,\
                    use_all_ch_in_signal_src, use_all_ch_in_signal_dst,\
-                    n_sig_creation_layers=1 ):
+                    n_sig_creation_layers ):
 
         super(CAComm, self).__init__()
 
@@ -46,7 +46,7 @@ class CAComm(Model):
 
       for i in tf.range(self.n_sig_creation_layers):      
         s = self.signal_creator[i](s)
-        
+
       s = self.upscale_signal(s)
 
       return s
