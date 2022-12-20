@@ -7,7 +7,8 @@ from keras.layers import Conv2D,AveragePooling2D,UpSampling2D
 
 class CAComm(Model):
     def __init__(self, n_leaf_ca_channels, n_leaf_ca_schannels, signal_factor,\
-                   use_all_ch_in_signal_src, use_all_ch_in_signal_dst ):
+                   use_all_ch_in_signal_src, use_all_ch_in_signal_dst,\
+                    n_sig_creation_layers=1 ):
 
         super(CAComm, self).__init__()
 
@@ -16,15 +17,17 @@ class CAComm(Model):
         self.signal_factor = signal_factor
         self.use_all_ch_in_signal_src = use_all_ch_in_signal_src
         self.use_all_ch_in_signal_dst = use_all_ch_in_signal_dst
+        self.n_sig_creation_layers = n_sig_creation_layers
 
         n_filters = (n_leaf_ca_channels + n_leaf_ca_schannels) \
                                 if use_all_ch_in_signal_dst else n_leaf_ca_schannels
 
-        self.signal_creator =  Conv2D(filters=n_filters,\
+        self.signal_creator =  [Conv2D(filters=n_filters,\
                                         kernel_size=1,\
                                             bias_initializer='glorot_uniform',\
-                                                kernel_initializer=tf.keras.initializers.Zeros()) # use linear activation
-                                                                                                  # should we use_bias?
+                                                kernel_initializer=tf.keras.initializers.Zeros()) \
+                                                  for _ in tf.range( n_sig_creation_layers ) ]
+
         self.feedback = AveragePooling2D(pool_size=(signal_factor,signal_factor), strides=signal_factor )
         self.upscale_signal = UpSampling2D(size=(signal_factor,signal_factor))
         initializer = tf.random_uniform_initializer(minval=-1.0 , maxval=1.0  )
@@ -40,8 +43,10 @@ class CAComm(Model):
       if not self.use_all_ch_in_signal_src:
         split_sizes = [3, -1] # remove latent channels from RGB channels 
         _, s  = tf.split(x, split_sizes, axis=-1 )
-            
-      s = self.signal_creator(s)
+
+      for i in tf.range(self.n_sig_creation_layers):      
+        s = self.signal_creator[i](s)
+        
       s = self.upscale_signal(s)
 
       return s
