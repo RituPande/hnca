@@ -66,12 +66,12 @@ class CAComm(Model):
 
 
 
-    def call(self, parent_x, leaf_x, comm_type='signal' ):
+    def call(self, parent_x, leaf_x, comm_type='actuator' ):
 
-      if comm_type =='signal':
+      if comm_type =='actuator':
         s = self._create_signal(parent_x)
         out = self._mix_signal(leaf_x, s)
-      elif comm_type == 'feedback':
+      elif comm_type == 'sensor':
         out = self.feedback(leaf_x)
       else:
         print("Invalid comm_type:",comm_type)
