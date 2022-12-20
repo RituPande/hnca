@@ -107,10 +107,10 @@ class HCAImgModel(Model):
                                                               comm_type='actuator')
                                                       
         
-        leaf_x = self.leaf_ca_model.step(leaf_channels, s=leaf_schannels, n_steps=1, training_type='hca')
+        leaf_x = self.leaf_ca_model.step(leaf_channels, s=leaf_schannels, n_steps=1, update_rate=1.0, training_type='hca')
 
         # report pooled leaf CA channels back to the 
-        parent_x = self.ca_comm_model(None, leaf_x , comm_type='sensor' )
+        parent_x = self.ca_comm_model(parent_x, leaf_x , comm_type='sensor' )
                 
         parent_x = self.parent_ca_model.step(parent_x, s=None, n_steps=1, update_rate=1.0, training_type='hca')
 

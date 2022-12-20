@@ -73,6 +73,8 @@ class CAComm(Model):
         out = self._mix_signal(leaf_x, s)
       elif comm_type == 'sensor':
         out = self.feedback(leaf_x)
+        if parent_x is not None:
+          out += parent_x
       else:
         print("Invalid comm_type:",comm_type)
         out = None 
