@@ -58,7 +58,7 @@ class HCAImgModel(Model):
                                                   signal_factor=4,\
                                                     use_all_ch_in_signal_src=use_all_ch_in_signal_src,\
                                                       use_all_ch_in_signal_dst=use_all_ch_in_signal_dst,\
-                                                      n_sig_n_sig_creation_layers=n_sig_creation_layers  )
+                                                      n_sig_creation_layers=n_sig_creation_layers  )
         self.leaf_ca_min_steps = leaf_ca_min_steps
         self.leaf_ca_max_steps = leaf_ca_max_steps
         self.parent_ca_min_steps = parent_ca_min_steps
