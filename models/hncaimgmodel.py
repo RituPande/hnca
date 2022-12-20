@@ -99,18 +99,18 @@ class HCAImgModel(Model):
         if parent_x is None:
             leaf_x, s = tf.split(leaf_x, [self.leaf_ca_model.n_channels, -1], axis=-1)
             leaf_x = tf.stop_gradient(self.leaf_ca_model.step(leaf_x,s,n_steps=step_n, training_type='hca'))
-            parent_x = self.ca_comm_model(None, leaf_x , comm_type='feedback' )
+            parent_x = self.ca_comm_model(None, leaf_x , comm_type='sensor' )
             parent_x = self.parent_ca_model.step(parent_x,s=None,n_steps=1, update_rate=1.0, training_type='hca')
 
         #Get signal from the parent CA and mix with leaf CA 
         leaf_channels, leaf_schannels = self.ca_comm_model( parent_x, leaf_x,\
-                                                              comm_type='signal')
+                                                              comm_type='actuator')
                                                       
         
         leaf_x = self.leaf_ca_model.step(leaf_channels, s=leaf_schannels, n_steps=1, training_type='hca')
 
         # report pooled leaf CA channels back to the 
-        parent_x = self.ca_comm_model(None, leaf_x , comm_type='feedback' )
+        parent_x = self.ca_comm_model(None, leaf_x , comm_type='sensor' )
                 
         parent_x = self.parent_ca_model.step(parent_x, s=None, n_steps=1, update_rate=1.0, training_type='hca')
 
