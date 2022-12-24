@@ -33,11 +33,11 @@ class HCAImgModel(Model):
                        parent_ca_min_steps=32, parent_ca_max_steps=96,\
                           hca_min_steps=32, hca_max_steps=96,\
                             leaf_ca_loss_type='ot', parent_ca_loss_type='mse',\
-                              n_leaf_ca_channels=3, n_leaf_ca_schannels=9,
-                                n_parent_ca_channels= 12, \
-                                use_all_ch_in_signal_src=True,\
-                                  use_all_ch_in_signal_dst=False, \
-                                    n_sig_creation_layers=1 ):
+                              n_leaf_ca_channels=3, n_leaf_ca_schannels=9,\
+                                n_parent_ca_channels= 12,\
+                                  sensor_all_ch_src=True, sensor_all_ch_dst=True, \
+                                    actuator_all_ch_src=True, actuator_all_ch_dst=True, \
+                                      n_sig_creation_layers=1 ):
 
         super(HCAImgModel,self).__init__()
 
@@ -48,6 +48,7 @@ class HCAImgModel(Model):
                                         n_schannels=n_leaf_ca_schannels,\
                                           target_size=self.leaf_img_target_size,\
                                              n_features = 64 )
+                                             
         self.parent_ca_model =  ImgCA(n_channels=n_parent_ca_channels,\
                                         n_schannels=0,\
                                           target_size=self.parent_img_target_size, \
@@ -56,9 +57,12 @@ class HCAImgModel(Model):
         self.ca_comm_model = CAComm( n_leaf_ca_channels=n_leaf_ca_channels,\
                                          n_leaf_ca_schannels=n_leaf_ca_schannels, \
                                                   signal_factor=4,\
-                                                    use_all_ch_in_signal_src=use_all_ch_in_signal_src,\
-                                                      use_all_ch_in_signal_dst=use_all_ch_in_signal_dst,\
-                                                      n_sig_creation_layers=n_sig_creation_layers  )
+                                                    sensor_all_ch_src=sensor_all_ch_src,\
+                                                     sensor_all_ch_dst=sensor_all_ch_dst, \
+                                                      actuator_all_ch_src=actuator_all_ch_src,\
+                                                       actuator_all_ch_dst=actuator_all_ch_dst,\
+                                                        n_sig_creation_layers=n_sig_creation_layers  )
+
         self.leaf_ca_min_steps = leaf_ca_min_steps
         self.leaf_ca_max_steps = leaf_ca_max_steps
         self.parent_ca_min_steps = parent_ca_min_steps
