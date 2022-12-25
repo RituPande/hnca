@@ -29,15 +29,13 @@ class HCAImgModel(Model):
 
     def __init__( self,\
                  leaf_ca_target,parent_ca_target,\
+                    comm_cfg_params,\
                       leaf_ca_min_steps=32, leaf_ca_max_steps=96, \
-                       parent_ca_min_steps=32, parent_ca_max_steps=96,\
+                        parent_ca_min_steps=32, parent_ca_max_steps=96,\
                           hca_min_steps=32, hca_max_steps=96,\
                             leaf_ca_loss_type='ot', parent_ca_loss_type='mse',\
                               n_leaf_ca_channels=3, n_leaf_ca_schannels=9,\
-                                n_parent_ca_channels= 12,\
-                                  sensor_all_ch_src=True, sensor_all_ch_dst=True, \
-                                    actuator_all_ch_src=True, actuator_all_ch_dst=True, \
-                                      n_sig_creation_layers=1 ):
+                                n_parent_ca_channels= 12 )                                   ):
 
         super(HCAImgModel,self).__init__()
 
@@ -56,12 +54,8 @@ class HCAImgModel(Model):
 
         self.ca_comm_model = CAComm( n_leaf_ca_channels=n_leaf_ca_channels,\
                                          n_leaf_ca_schannels=n_leaf_ca_schannels, \
-                                                  signal_factor=4,\
-                                                    sensor_all_ch_src=sensor_all_ch_src,\
-                                                     sensor_all_ch_dst=sensor_all_ch_dst, \
-                                                      actuator_all_ch_src=actuator_all_ch_src,\
-                                                       actuator_all_ch_dst=actuator_all_ch_dst,\
-                                                        n_sig_creation_layers=n_sig_creation_layers  )
+                                           n_parent_ca_channels=n_parent_ca_channels,\
+                                              config_params=comm_cfg_params  )
 
         self.leaf_ca_min_steps = leaf_ca_min_steps
         self.leaf_ca_max_steps = leaf_ca_max_steps
