@@ -70,6 +70,7 @@ class HCAImgModel(Model):
         self.hca_min_steps = hca_min_steps
         self.hca_max_steps = hca_max_steps
         
+        
         self.leaf_ca_target_img = load_image(leaf_ca_target)[None,:,:,:3]
         self.parent_ca_target_img = load_image(parent_ca_target)[None,:,:,:3]
 
@@ -103,7 +104,8 @@ class HCAImgModel(Model):
         if parent_x is None:
             leaf_x, s = tf.split(leaf_x, [self.leaf_ca_model.n_channels, -1], axis=-1)
             leaf_x = tf.stop_gradient(self.leaf_ca_model.step(leaf_x,s,n_steps=step_n, training_type='hca'))
-            parent_x = self.ca_comm_model(None, leaf_x , comm_type='sensor' )
+            feedback = self.ca_comm_model(None, leaf_x , comm_type='sensor' )
+            parent_x = feedback[0] if self.ca_comm_model.sensor_all_ch_dst else tf.concate([feedback[0], feedback[1]], axis=-1 )
             parent_x = self.parent_ca_model.step(parent_x,s=None,n_steps=1, update_rate=1.0, training_type='hca')
 
         #Get signal from the parent CA and mix with leaf CA 
@@ -114,7 +116,9 @@ class HCAImgModel(Model):
         leaf_x = self.leaf_ca_model.step(leaf_channels, s=leaf_schannels, n_steps=1, update_rate=1.0, training_type='hca')
 
         # report pooled leaf CA channels back to the 
-        parent_x = self.ca_comm_model(parent_x, leaf_x , comm_type='sensor' )
+        feedback = self.ca_comm_model(parent_x, leaf_x , comm_type='sensor' )
+
+        parent_x = feedback[0] if self.ca_comm_model.sensor_all_ch_dst else tf.concate([feedback[0], feedback[1]], axis=-1 )
                 
         parent_x = self.parent_ca_model.step(parent_x, s=None, n_steps=1, update_rate=1.0, training_type='hca')
 
