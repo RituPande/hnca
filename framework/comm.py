@@ -125,7 +125,7 @@ class CAComm(Model):
         out = self._mix_signal(leaf_x, s, comm_type)
       elif comm_type == 'sensor':
         s = self._create_signal(leaf_x, comm_type)
-        out = self._mix_signal(parent_x, s, comm_type) if parent_x is not None else s
+        out = self._mix_signal(parent_x, s, comm_type) if parent_x is not None else (s,None)
       else:
         print("Invalid comm_type:",comm_type)
         out = None 
