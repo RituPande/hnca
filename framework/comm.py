@@ -14,13 +14,13 @@ class CAComm(Model):
         self.n_leaf_ca_schannels = n_leaf_ca_schannels
         self.n_parent_ca_channels = n_parent_ca_channels
 
-        self.signal_factor = config_params.signal_factor
-        self.sensor_all_ch_src = config_params.sensor_all_ch_src 
-        self.sensor_all_ch_dst = config_params.sensor_all_ch_dst 
-        self.actuator_all_ch_src = config_params.actuator_all_ch_src
-        self.actuator_all_ch_dst = config_params.actuator_all_ch_dst
-        self.n_actuator_sig_creation_layers = config_params.n_actuator_sig_creation_layers
-        self.n_sensor_sig_creation_layers = config_params.n_sensor_sig_creation_layers
+        self.signal_factor = config_params['signal_factor']
+        self.sensor_all_ch_src = config_params['sensor_all_ch_src'] 
+        self.sensor_all_ch_dst = config_params['sensor_all_ch_dst'] 
+        self.actuator_all_ch_src = config_params['actuator_all_ch_src']
+        self.actuator_all_ch_dst = config_params['actuator_all_ch_dst']
+        self.n_actuator_sig_creation_layers = config_params['n_actuator_sig_creation_layers']
+        self.n_sensor_sig_creation_layers = config_params['n_sensor_sig_creation_layers']
 
         n_actuation_filters = (n_leaf_ca_channels + n_leaf_ca_schannels) \
                                 if self.actuator_all_ch_dst else n_leaf_ca_schannels
