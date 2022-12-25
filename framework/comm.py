@@ -106,7 +106,7 @@ class CAComm(Model):
 
       K_T = tf.transpose(K, perm=[0,2,1])
 
-      scaling_f = tf.math.sqrt(self.d)
+      scaling_f = tf.math.sqrt(tf.cast(self.d, dtype=tf.float32))
       ALPHA = tf.nn.softmax( (Q @ K_T)/scaling_f, axis = -1 )
 
       x_new_reshaped = tf.reduce_sum(ALPHA*V, axis=-1)
