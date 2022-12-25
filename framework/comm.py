@@ -107,7 +107,7 @@ class CAComm(Model):
 
       ALPHA = tf.nn.softmax( Q @ K_T, axis = -1 )
 
-      x_new_reshaped = ALPHA*V
+      x_new_reshaped = tf.reduce_sum(ALPHA*V, axis=-1)
 
       x_new_signal_ch = tf.reshape(x_new_reshaped, (b_x,h_x, w_x, c_x ))
 
