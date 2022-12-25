@@ -80,12 +80,18 @@ class CAComm(Model):
       concat_ch = False
 
       if comm_type == 'actuator':
-        
+        Q = self.Q_actuator
+        K = self.K_actuator
+        V = self.V_actuator
+
         if not self.actuator_all_ch_dst:
           x_orig_ch , x_orig_signal_ch = tf.split(x, [self.n_leaf_ca_channels, -1], axis=-1 )
           concat_ch = True
-
+        
       elif comm_type == 'sensor':
+        Q = self.Q_sensor
+        K = self.K_sensor
+        V = self.V_sensor
 
         if not self.sensor_all_ch_dst:
           x_orig_ch , x_orig_signal_ch = tf.split(x, [ 3 , -1], axis=-1 )
@@ -100,16 +106,16 @@ class CAComm(Model):
 
       s_reshaped = tf.reshape(s, ( b_s*w_s*h_s,c_s, 1) )
 
-      Q = self.Q_actuator(x_reshaped)
-      K = self.K_actuator(s_reshaped)
-      V = self.V_actuator(s_reshaped)
+      q = Q(x_reshaped)
+      k = K(s_reshaped)
+      v = V(s_reshaped)
 
-      K_T = tf.transpose(K, perm=[0,2,1])
+      k_T = tf.transpose(k, perm=[0,2,1])
 
       scaling_f = tf.math.sqrt(tf.cast(self.d, dtype=tf.float32))
-      ALPHA = tf.nn.softmax( (Q @ K_T)/scaling_f, axis = -1 )
+      alpha = tf.nn.softmax( (q @ k_T)/scaling_f, axis = -1 )
 
-      x_new_reshaped = tf.reduce_sum(ALPHA*V, axis=-1)
+      x_new_reshaped = tf.reduce_sum(alpha*v, axis=-1)
 
       x_new_signal_ch = tf.reshape(x_new_reshaped, (b_x,h_x, w_x, c_x ))
 
