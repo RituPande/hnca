@@ -93,11 +93,11 @@ class CAComm(Model):
        
       b_x, h_x, w_x, c_x =   x_orig_signal_ch.shape
 
-      x_reshaped = tf.rehape(x_orig_signal_ch, (b_x*w_x*h_x,c_x,1) )
+      x_reshaped = tf.reshape(x_orig_signal_ch, (b_x*w_x*h_x,c_x,1) )
 
       b_s, w_s, h_s, c_s =   s.shape
 
-      s_reshaped = tf.rehape(s, ( b_s*w_s*h_s, c_s, 1) )
+      s_reshaped = tf.reshape(s, ( b_s*w_s*h_s, c_s, 1) )
 
       Q = self.Q_actuator(x_reshaped)
       K = self.K_actuator(s_reshaped)
