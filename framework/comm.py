@@ -6,32 +6,41 @@ from keras import Model
 from keras.layers import Conv2D,AveragePooling2D,UpSampling2D, Dense
 
 class CAComm(Model):
-    def __init__(self, n_leaf_ca_channels, n_leaf_ca_schannels, signal_factor,\
-                   sensor_all_ch_src, sensor_all_ch_dst, actuator_all_ch_src, actuator_all_ch_dst,\
-                    n_sig_creation_layers ):
+    def __init__(self, n_leaf_ca_channels, n_leaf_ca_schannels, n_parent_ca_channels, config_params ):
 
         super(CAComm, self).__init__()
 
         self.n_leaf_ca_channels = n_leaf_ca_channels
         self.n_leaf_ca_schannels = n_leaf_ca_schannels
-        self.signal_factor = signal_factor
-        self.sensor_all_ch_src = sensor_all_ch_src
-        self.sensor_all_ch_dst = sensor_all_ch_dst
-        self.actuator_all_ch_src = actuator_all_ch_src
-        self.actuator_all_ch_dst = actuator_all_ch_dst
-        self.n_sig_creation_layers = n_sig_creation_layers
+        self.n_parent_ca_channels = n_parent_ca_channels
 
-        n_filters = (n_leaf_ca_channels + n_leaf_ca_schannels) \
-                                if actuator_all_ch_dst else n_leaf_ca_schannels
+        self.signal_factor = config_params.signal_factor
+        self.sensor_all_ch_src = config_params.sensor_all_ch_src 
+        self.sensor_all_ch_dst = config_params.sensor_all_ch_dst 
+        self.actuator_all_ch_src = config_params.actuator_all_ch_src
+        self.actuator_all_ch_dst = config_params.actuator_all_ch_dst
+        self.n_actuator_sig_creation_layers = config_params.n_actuator_sig_creation_layers
+        self.n_sensor_sig_creation_layers = config_params.n_sensor_sig_creation_layers
 
-        self.signal_creator =  [Conv2D(filters=n_filters,\
+        n_actuation_filters = (n_leaf_ca_channels + n_leaf_ca_schannels) \
+                                if self.actuator_all_ch_dst else n_leaf_ca_schannels
+
+        self.actuator_signal_creator =  [Conv2D(filters=n_actuation_filters,\
                                         kernel_size=1,\
                                             bias_initializer='glorot_uniform',\
                                                 kernel_initializer=tf.keras.initializers.Zeros()) \
-                                                  for _ in tf.range( n_sig_creation_layers ) ]
+                                                  for _ in tf.range( self.n_actuator_sig_creation_layers ) ]
+        
+        n_sensor_filters = n_parent_ca_channels
+        
+        self.sensor_signal_creator =  [Conv2D(filters=n_sensor_filters,\
+                                        kernel_size=1,\
+                                            bias_initializer='glorot_uniform',\
+                                                kernel_initializer=tf.keras.initializers.Zeros()) \
+                                                  for _ in tf.range( self.n_sensor_sig_creation_layers ) ]
 
-        self.feedback = AveragePooling2D(pool_size=(signal_factor,signal_factor), strides=signal_factor )
-        self.upscale_signal = UpSampling2D(size=(signal_factor,signal_factor))
+        self.feedback = AveragePooling2D(pool_size=(self.signal_factor,self.signal_factor), strides=self.signal_factor )
+        self.upscale_signal = UpSampling2D(size=(self.signal_factor, self.signal_factor))
         initializer = tf.random_uniform_initializer(minval=-1.0 , maxval=1.0  )
 
         #n_features =  n_leaf_ca_schannels \
@@ -56,8 +65,8 @@ class CAComm(Model):
           split_sizes = [3, -1] # remove latent channels from RGB channels 
           _, s  = tf.split(x, split_sizes, axis=-1 )
 
-        for i in tf.range(self.n_sig_creation_layers):      
-          s = self.signal_creator[i](s)
+        for i in tf.range(self.n_actuator_sig_creation_layers):      
+          s = self.actuator_signal_creator[i](s)
 
         s = self.upscale_signal(s)
       
@@ -68,6 +77,9 @@ class CAComm(Model):
           _, s  = tf.split(x, split_sizes, axis=-1 )
 
         s = self.feedback(x)
+        for i in tf.range(self.n_sensor_sig_creation_layers):      
+          s = self.sensor_signal_creator[i](s)
+
       else :
         s = None
         print("Invalid comm_type")
