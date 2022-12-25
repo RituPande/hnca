@@ -37,13 +37,14 @@ class CAComm(Model):
         #n_features =  n_leaf_ca_schannels \
         #    if not use_all_ch_in_signal_dst else (n_leaf_ca_channels + n_leaf_ca_schannels)
         #self.signal_lr = tf.Variable( initializer(shape=[1,n_features], dtype=tf.float32),  trainable=True)
+        self.d = 16
 
-        self.Q_sensor = Dense(units=16, use_bias=False) 
-        self.K_sensor = Dense(units=16, use_bias=False) 
+        self.Q_sensor = Dense(units=self.d, use_bias=False) 
+        self.K_sensor = Dense(units=self.d, use_bias=False) 
         self.V_sensor = Dense(units=1, use_bias=False) 
 
-        self.Q_actuator = Dense(units=16, use_bias=False) 
-        self.K_actuator = Dense(units=16, use_bias=False) 
+        self.Q_actuator = Dense(units=self.d, use_bias=False) 
+        self.K_actuator = Dense(units=self.d, use_bias=False) 
         self.V_actuator = Dense(units=1, use_bias=False) 
 
 
@@ -105,7 +106,8 @@ class CAComm(Model):
 
       K_T = tf.transpose(K, perm=[0,2,1])
 
-      ALPHA = tf.nn.softmax( Q @ K_T, axis = -1 )
+      scaling_f = tf.math.sqrt(self.d)
+      ALPHA = tf.nn.softmax( (Q @ K_T)/scaling_f, axis = -1 )
 
       x_new_reshaped = tf.reduce_sum(ALPHA*V, axis=-1)
 
