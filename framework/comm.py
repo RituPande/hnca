@@ -97,13 +97,15 @@ class CAComm(Model):
 
       b_s, w_s, h_s, c_s =   s.shape
 
-      s_reshaped = tf.reshape(s, ( b_s*w_s*h_s, c_s, 1) )
+      s_reshaped = tf.reshape(s, ( b_s*w_s*h_s,c_s, 1) )
 
       Q = self.Q_actuator(x_reshaped)
       K = self.K_actuator(s_reshaped)
       V = self.V_actuator(s_reshaped)
 
-      ALPHA = tf.nn.softmax( Q @ K.T, axis = -1 )
+      K_T = tf.transpose(K, perm=[0,2,1])
+
+      ALPHA = tf.nn.softmax( Q @ K_T, axis = -1 )
 
       x_new_reshaped = ALPHA*V
 
