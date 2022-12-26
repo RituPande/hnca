@@ -2,7 +2,7 @@ from hnca.framework.ca import ImgCA
 from hnca.framework.losses import StyleLoss, MSELoss
 from hnca.framework.utils import load_image, show_image, plot_loss, create_parent_seed 
 from hnca.framework.types import ReplayBuffer
-from hnca.framework.comm import CAComm
+from hnca.framework.comm import Sensor, Actuator
 import tensorflow as tf
 import numpy as np
 from tensorflow import keras
@@ -54,10 +54,18 @@ class HCAImgModel(Model):
                                           target_size=self.parent_img_target_size, \
                                              n_features=64 )
 
-        self.ca_comm_model = CAComm( n_leaf_ca_channels=n_leaf_ca_channels,\
-                                         n_leaf_ca_schannels=n_leaf_ca_schannels, \
-                                           n_parent_ca_channels=n_parent_ca_channels,\
-                                              config_params=comm_cfg_params  )
+        self.sensor = Sensor( n_leaf_ca_channels, n_parent_ca_channels,\
+                                signal_factor= comm_cfg_params['signal_factor'],\
+                                 n_sig_creation_layers=comm_cfg_params['n_sensor_sig_creation_layers'],\
+                                  all_ch_in_src=comm_cfg_params['sensor_all_ch_in_src'],\
+                                    all_ch_in_dst=comm_cfg_params['sensor_all_ch_in_dst'],\
+                                      multiplex_type=comm_cfg_params['sensor_multiplex_type'])
+        self.actuator = Actuator(n_leaf_ca_channels, n_leaf_ca_schannels,\
+                                  signal_factor= comm_cfg_params['signal_factor'],\
+                                    n_sig_creation_layers=comm_cfg_params['n_actuator_sig_creation_layers'],\
+                                      all_ch_in_src=comm_cfg_params['actuator_all_ch_in_src'],\
+                                        all_ch_in_dst=comm_cfg_params['actuator_all_ch_in_dst'],\
+                                          multiplex_type=comm_cfg_params['actuator_multiplex_type']))
 
         self.leaf_ca_min_steps = leaf_ca_min_steps
         self.leaf_ca_max_steps = leaf_ca_max_steps
@@ -100,22 +108,17 @@ class HCAImgModel(Model):
         if parent_x is None:
             leaf_x, s = tf.split(leaf_x, [self.leaf_ca_model.n_channels, -1], axis=-1)
             leaf_x = tf.stop_gradient(self.leaf_ca_model.step(leaf_x,s,n_steps=step_n, training_type='hca'))
-            feedback = self.ca_comm_model(None, leaf_x , comm_type='sensor' )
-            parent_x = feedback[0] if self.ca_comm_model.sensor_all_ch_dst else tf.concate([feedback[0], feedback[1]], axis=-1 )
+            parent_x = self.sensor(leaf_x , None )
             parent_x = self.parent_ca_model.step(parent_x,s=None,n_steps=1, update_rate=1.0, training_type='hca')
 
         #Get signal from the parent CA and mix with leaf CA 
-        leaf_channels, leaf_schannels = self.ca_comm_model( parent_x, leaf_x,\
-                                                              comm_type='actuator')
+        leaf_channels, leaf_schannels = self.actuator( parent_x, leaf_x )
                                                       
-        
         leaf_x = self.leaf_ca_model.step(leaf_channels, s=leaf_schannels, n_steps=1, update_rate=1.0, training_type='hca')
 
         # report pooled leaf CA channels back to the 
-        feedback = self.ca_comm_model(parent_x, leaf_x , comm_type='sensor' )
+        parent_x = self.sensor(parent_x, leaf_x )
 
-        parent_x = feedback[0] if self.ca_comm_model.sensor_all_ch_dst else tf.concate([feedback[0], feedback[1]], axis=-1 )
-                
         parent_x = self.parent_ca_model.step(parent_x, s=None, n_steps=1, update_rate=1.0, training_type='hca')
 
         return leaf_x, parent_x 
@@ -285,7 +288,7 @@ class HCAImgModel(Model):
             hca_history.append(loss_hca.numpy())
             parent_ca_history.append(loss_parent.numpy())
             leaf_ca_history.append(loss_leaf.numpy())
-            training_vars = self.parent_ca_model.trainable_variables + self.ca_comm_model.trainable_variables
+            training_vars = self.parent_ca_model.trainable_variables + self.sensor.trainable_variables + self.actuator.trainable_variables
             gradients_hca = hca_tape.gradient(loss_hca,  training_vars ) 
             grads = [g/(tf.norm(g)+1e-8) for g in gradients_hca]
             optimizer_hca.apply_gradients(zip(grads, training_vars))
