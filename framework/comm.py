@@ -9,15 +9,17 @@ class Sensor(Model):
   def __init__( self, n_leaf_ca_channels, n_parent_ca_channels,\
                    signal_factor,\
                        n_sig_creation_layers,\
-                        all_ch_in_src,\
-                          all_ch_in_dst,\
+                        all_ch_src,\
+                          all_ch_dst,\
                             multiplex_type='simple',\
                             ):
-    super(Sensor,self)
+
+    super(Sensor,self).__init__()
     self.n_leaf_ca_channels = n_leaf_ca_channels
-    self.all_ch_in_src = all_ch_in_src
-    self.all_ch_in_dst = all_ch_in_dst # not used currently. Always set to True
+    self.all_ch_src = all_ch_src
+    self.all_ch_dst = all_ch_dst # not used currently. Always set to True
     self.signal_factor = signal_factor
+    self.n_sig_creation_layers = n_sig_creation_layers
 
     self.feedback = AveragePooling2D(pool_size=(self.signal_factor,self.signal_factor), strides=self.signal_factor )
     self.signal_creator =  [Conv2D(filters=n_parent_ca_channels,\
@@ -35,7 +37,7 @@ class Sensor(Model):
 
   def call( self, x_src, x_dst ):
 
-    x_src = x_src if self.all_ch_in_src else tf.split(x_src, [self.n_leaf_ca_channels, -1 ], axis=-1)[1]
+    x_src = x_src if self.all_ch_src else tf.split(x_src, [self.n_leaf_ca_channels, -1 ], axis=-1)[1]
     s = self.feedback(x_src)
     for i in tf.range(self.n_sig_creation_layers):      
         s = self.signal_creator[i](s)
@@ -50,12 +52,13 @@ class Actuator(Model):
   def __init__( self, n_leaf_ca_channels, n_leaf_ca_schannels, 
                         signal_factor,\
                           n_sig_creation_layers,\
-                            all_ch_in_src, all_ch_in_dst,\
+                            all_ch_src, all_ch_dst,\
                               multiplex_type='simple' ):
-    super(Actuator,self )
 
-    self.all_ch_in_src = all_ch_in_src
-    self.all_ch_in_dst = all_ch_in_dst
+    super(Actuator,self ).__init__()
+
+    self.all_ch_src = all_ch_src
+    self.all_ch_dst = all_ch_dst
     self.signal_factor = signal_factor
     self.n_sig_creation_layers = n_sig_creation_layers
 
@@ -89,14 +92,13 @@ class Actuator(Model):
     s = self.upscale_signal(s)
 
     # multiplex to destination
-    x_dst_feat_ch, x_dst_latent_ch = tf.split(x_src, [self.n_leaf_ca_channels,-1], axis=-1 )
     if self.all_ch_in_dst: 
         x_dst_sig_ch = x_dst
     else:
         x_dst_feat_ch, x_dst_sig_ch = tf.split(x_src, [self.n_leaf_ca_channels,-1], axis=-1 )
         
     mixed_s_ch = self.multiplexer(x_dst_sig_ch, s)
-    out = (mixed_s_ch, None) if self.all_ch_in_dst else (x_dst_feat_ch, mixed_s_ch )
+    out = (mixed_s_ch, None) if self.all_ch_dst else (x_dst_feat_ch, mixed_s_ch )
     return out
 
 class CAComm(Model):

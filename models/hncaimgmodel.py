@@ -55,15 +55,15 @@ class HCAImgModel(Model):
         self.sensor = Sensor( n_leaf_ca_channels, n_parent_ca_channels,\
                                 signal_factor= comm_cfg_params['signal_factor'],\
                                  n_sig_creation_layers=comm_cfg_params['n_sensor_sig_creation_layers'],\
-                                  all_ch_in_src=comm_cfg_params['sensor_all_ch_src'],\
-                                    all_ch_in_dst=comm_cfg_params['sensor_all_ch_dst'],\
+                                  all_ch_src=comm_cfg_params['sensor_all_ch_src'],\
+                                    all_ch_dst=comm_cfg_params['sensor_all_ch_dst'],\
                                       multiplex_type=comm_cfg_params['sensor_multiplex_type'])
-                                      
+
         self.actuator = Actuator(n_leaf_ca_channels, n_leaf_ca_schannels,\
                                   signal_factor= comm_cfg_params['signal_factor'],\
                                     n_sig_creation_layers=comm_cfg_params['n_actuator_sig_creation_layers'],\
-                                      all_ch_in_src=comm_cfg_params['actuator_all_ch_src'],\
-                                        all_ch_in_dst=comm_cfg_params['actuator_all_ch_dst'],\
+                                      all_ch_src=comm_cfg_params['actuator_all_ch_src'],\
+                                        all_ch_dst=comm_cfg_params['actuator_all_ch_dst'],\
                                           multiplex_type=comm_cfg_params['actuator_multiplex_type'])
 
         self.leaf_ca_min_steps = leaf_ca_min_steps
