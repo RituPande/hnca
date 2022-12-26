@@ -119,8 +119,8 @@ class HCAImgModel(Model):
                                                       
         leaf_x = self.leaf_ca_model.step(leaf_channels, s=leaf_schannels, n_steps=1, update_rate=1.0, training_type='hca')
 
-        # report pooled leaf CA channels back to the 
-        parent_x = self.sensor(parent_x, leaf_x )
+        # Report pooled leaf CA signal back to the 
+        parent_x = self.sensor(leaf_x, None  )
 
         parent_x = self.parent_ca_model.step(parent_x, s=None, n_steps=1, update_rate=1.0, training_type='hca')
 
