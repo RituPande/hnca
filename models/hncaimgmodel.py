@@ -27,17 +27,15 @@ Methods
 
 class HCAImgModel(Model):
 
-    def __init__( self,\
-                 leaf_ca_target,parent_ca_target,\
-                    comm_cfg_params,\
-                      leaf_img_target_size=128,\
-                       parent_img_target_size=32,\
-                        leaf_ca_min_steps=32, leaf_ca_max_steps=96, \
-                          parent_ca_min_steps=32, parent_ca_max_steps=96,\
-                            hca_min_steps=32, hca_max_steps=96,\
-                              leaf_ca_loss_type='ot', parent_ca_loss_type='mse',\
-                                n_leaf_ca_channels=3, n_leaf_ca_schannels=9,\
-                                  n_parent_ca_channels= 12 )                                   ):
+    def __init__( self,leaf_ca_target,parent_ca_target,\
+                          comm_cfg_params,\
+                            leaf_img_target_size=128,parent_img_target_size=32,\
+                                leaf_ca_min_steps=32, leaf_ca_max_steps=96,\
+                                    parent_ca_min_steps=32, parent_ca_max_steps=96,\
+                                        hca_min_steps=32, hca_max_steps=96,\
+                                            leaf_ca_loss_type='ot', parent_ca_loss_type='mse',\
+                                             n_leaf_ca_channels=3, n_leaf_ca_schannels=9,\
+                                                n_parent_ca_channels=12 ):
 
         super(HCAImgModel,self).__init__()
 
@@ -65,7 +63,7 @@ class HCAImgModel(Model):
                                     n_sig_creation_layers=comm_cfg_params['n_actuator_sig_creation_layers'],\
                                       all_ch_in_src=comm_cfg_params['actuator_all_ch_in_src'],\
                                         all_ch_in_dst=comm_cfg_params['actuator_all_ch_in_dst'],\
-                                          multiplex_type=comm_cfg_params['actuator_multiplex_type']))
+                                          multiplex_type=comm_cfg_params['actuator_multiplex_type'])
 
         self.leaf_ca_min_steps = leaf_ca_min_steps
         self.leaf_ca_max_steps = leaf_ca_max_steps
