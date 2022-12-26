@@ -42,7 +42,8 @@ class Sensor(Model):
     for i in tf.range(self.n_sig_creation_layers):      
         s = self.signal_creator[i](s)
 
-    out = self.multiplexer(x_dst, s)
+    # x_dst is None in case of first feedback from leaf ca.
+    out = s  if x_dst is None else self.multiplexer(x_dst, s) 
     return out
     
     
