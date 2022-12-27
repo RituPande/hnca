@@ -28,13 +28,15 @@ class Sensor(Model):
                                                 kernel_initializer=tf.keras.initializers.Zeros()) \
                                                   for _ in tf.range( self.n_sig_creation_layers ) ]
 
-    if multiplex_type == 'simple':
+    if multiplex_type is None:
+      self.multiplexer = None
+    elif multiplex_type == 'simple':
       self.multiplexer = SimpleMultiplexer( n_features=n_parent_ca_channels)
     elif multiplex_type == 'cross_attention':
       self.multiplexer = CrossAttMultiplexer(d=16)
     else:
-      self.multiplexer = None
-
+      print('Invalid multiplex_type')
+      
 
 
   def call( self, x_src, x_dst ):
@@ -46,7 +48,7 @@ class Sensor(Model):
 
     # x_dst is None in case of first feedback from leaf ca or if we don't want any contribution
     # of parent CA in leaf CA 
-    out = s  if x_dst is None or self.multiplexer==None else self.multiplexer(x_dst, s) 
+    out = s  if x_dst is None or self.multiplexer==None else self.multiplexer(s, x_dst ) 
     return out
     
     
@@ -79,14 +81,19 @@ class Actuator(Model):
 
     self.upscale_signal = UpSampling2D(size=(self.signal_factor, self.signal_factor))
     
-    if multiplex_type == 'simple':
+    if multiplex_type is None:
+      self.multiplexer = None
+    elif multiplex_type == 'simple':
       n = (n_leaf_ca_channels + n_leaf_ca_schannels) \
                                 if self.all_ch_dst else n_leaf_ca_schannels
-
       self.multiplexer = SimpleMultiplexer( n_features=n)
-
     elif multiplex_type == 'cross_attention':
       self.multiplexer = CrossAttMultiplexer(d=16)
+    else:
+      print('Invalid multiplex type')
+
+   
+
 
 
   
@@ -104,7 +111,7 @@ class Actuator(Model):
     else:
         x_dst_feat_ch, x_dst_sig_ch = tf.split(x_src, [self.n_leaf_ca_channels,-1], axis=-1 )
         
-    mixed_s_ch = s  if x_dst_sig_ch is None or self.multiplexer==None else self.multiplexer(x_dst_sig_ch, s) 
+    mixed_s_ch = s  if x_dst_sig_ch is None or self.multiplexer==None else self.multiplexer(s, x_dst_sig_ch) 
    
     out = (mixed_s_ch, None) if self.all_ch_dst else (x_dst_feat_ch, mixed_s_ch )
     return out
