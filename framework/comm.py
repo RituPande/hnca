@@ -92,11 +92,7 @@ class Actuator(Model):
     else:
       print('Invalid multiplex type')
 
-   
-
-
-
-  
+     
   def call(self, x_src, x_dst ):
     
     # create signal from source
