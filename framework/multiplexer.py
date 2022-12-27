@@ -11,8 +11,8 @@ class SimpleMultiplexer(Model):
     initializer = tf.random_uniform_initializer(minval=-1.0 , maxval=1.0  )
     self.lr = tf.Variable( initializer(shape=[1,n_features], dtype=tf.float32),  trainable=True)
     
-  def call(self, x, s ):
-    out = x + self.lr*s
+  def call(self, x_src, x_dst ):
+    out = x_dst + self.lr*x_src
     return out
 
 class CrossAttMultiplexer(Model):
@@ -26,15 +26,15 @@ class CrossAttMultiplexer(Model):
     self.V = Dense(units=1, use_bias=False) 
 
     
-  def call(self, x, s ):
+  def call(self, x_src, x_dst ):
    
-      b_x, h_x, w_x, c_x =   x.shape
+      b_x, h_x, w_x, c_x =   x_dst.shape
 
-      x_reshaped = tf.reshape(x, (b_x*w_x*h_x,c_x,1) )
+      x_reshaped = tf.reshape(x_dst, (b_x*w_x*h_x,c_x,1) )
 
-      b_s, w_s, h_s, c_s = s.shape
+      b_s, w_s, h_s, c_s = x_src.shape
 
-      s_reshaped = tf.reshape(s, ( b_s*w_s*h_s,c_s, 1) )
+      s_reshaped = tf.reshape(x_src, ( b_s*w_s*h_s,c_s, 1) )
 
       q = self.Q(x_reshaped)
       k = self.K(s_reshaped)
