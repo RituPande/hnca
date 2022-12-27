@@ -104,7 +104,8 @@ class Actuator(Model):
     else:
         x_dst_feat_ch, x_dst_sig_ch = tf.split(x_src, [self.n_leaf_ca_channels,-1], axis=-1 )
         
-    mixed_s_ch = self.multiplexer(x_dst_sig_ch, s)
+    mixed_s_ch = s  if x_dst_sig_ch is None or self.multiplexer==None else self.multiplexer(x_dst_sig_ch, s) 
+   
     out = (mixed_s_ch, None) if self.all_ch_dst else (x_dst_feat_ch, mixed_s_ch )
     return out
 
