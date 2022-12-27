@@ -113,8 +113,11 @@ class HCAImgModel(Model):
           parent_x = self.sensor(leaf_x , None )
           parent_x = self.parent_ca_model.step(parent_x, s=None, n_steps=1, update_rate=1.0, training_type='hca')
         else:
+          # leaf_ca  is actuated from current parent ca state
           leaf_channels, leaf_schannels = self.actuator( parent_x, leaf_x )
+          #parent ca detects feedback from current leaf ca state
           parent_x = self.sensor(leaf_x , None )
+          #take 1 step of leaf and parent ca with new signals in each direction
           leaf_x = self.leaf_ca_model.step(leaf_channels, s=leaf_schannels, n_steps=1, update_rate=1.0, training_type='hca')
           parent_x = self.parent_ca_model.step(parent_x, s=None, n_steps=1, update_rate=1.0, training_type='hca')
 
