@@ -105,8 +105,24 @@ class HCAImgModel(Model):
             print("Parent CA Loss type not supported")
 
 
-    def call(self, leaf_x, parent_x=None ):
+    def call( self, leaf_x, parent_x):
+        # create leaf_x and parent_x for the first time
+        if parent_x is None:
+          step_n = np.random.randint(self.leaf_ca_min_steps, self.leaf_ca_max_steps)
+          leaf_x = tf.stop_gradient(self.leaf_ca_model.step(leaf_x,s=None,n_steps=step_n, training_type='hca'))
+          parent_x = self.sensor(leaf_x , None )
+          parent_x = self.parent_ca_model.step(parent_x, s=None, n_steps=1, update_rate=1.0, training_type='hca')
+        else:
+          leaf_channels, leaf_schannels = self.actuator( parent_x, leaf_x )
+          parent_x = self.sensor(leaf_x , None )
+          leaf_x = self.leaf_ca_model.step(leaf_channels, s=leaf_schannels, n_steps=1, update_rate=1.0, training_type='hca')
+          parent_x = self.parent_ca_model.step(parent_x, s=None, n_steps=1, update_rate=1.0, training_type='hca')
 
+        return leaf_x, parent_x 
+
+    """
+    def call(self, leaf_x, parent_x=None ):
+        
         step_n = np.random.randint(self.leaf_ca_min_steps, self.leaf_ca_max_steps)
         if parent_x is None:
             leaf_x, s = tf.split(leaf_x, [self.leaf_ca_model.n_channels, -1], axis=-1)
@@ -125,7 +141,7 @@ class HCAImgModel(Model):
         parent_x = self.parent_ca_model.step(parent_x, s=None, n_steps=1, update_rate=1.0, training_type='hca')
 
         return leaf_x, parent_x 
-
+    """
          
     def pretrain_leaf_ca( self, lr=1e-3, num_epochs= 5000, use_pool=True, batch_size=4):
 
