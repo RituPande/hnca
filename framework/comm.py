@@ -30,9 +30,11 @@ class Sensor(Model):
 
     if multiplex_type == 'simple':
       self.multiplexer = SimpleMultiplexer( n_features=n_parent_ca_channels)
-
     elif multiplex_type == 'cross_attention':
       self.multiplexer = CrossAttMultiplexer(d=16)
+    else:
+      self.multiplexer = None
+
 
 
   def call( self, x_src, x_dst ):
@@ -44,7 +46,7 @@ class Sensor(Model):
 
     # x_dst is None in case of first feedback from leaf ca or if we don't want any contribution
     # of parent CA in leaf CA 
-    out = s  if x_dst is None else self.multiplexer(x_dst, s) 
+    out = s  if x_dst is None or self.multiplexer==None else self.multiplexer(x_dst, s) 
     return out
     
     
