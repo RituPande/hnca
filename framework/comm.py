@@ -64,6 +64,7 @@ class Actuator(Model):
     self.signal_factor = signal_factor
     self.n_sig_creation_layers = n_sig_creation_layers
 
+    
     n_actuation_filters = (n_leaf_ca_channels + n_leaf_ca_schannels) \
                                 if self.all_ch_dst else n_leaf_ca_schannels
 
@@ -74,6 +75,8 @@ class Actuator(Model):
                                                   for _ in tf.range( self.n_sig_creation_layers ) ]
 
 
+    self.upscale_signal = UpSampling2D(size=(self.signal_factor, self.signal_factor))
+    
     if multiplex_type == 'simple':
       n = (n_leaf_ca_channels + n_leaf_ca_schannels) \
                                 if self.all_ch_dst else n_leaf_ca_schannels
@@ -89,12 +92,12 @@ class Actuator(Model):
     
     # create signal from source
     s = x_src if self.all_ch_src else tf.split(x_src, [3,-1], axis=-1 )[1] # remove rgb channels
-    for i in tf.range(self.n_actuator_sig_creation_layers):      
+    for i in tf.range(self.n_sig_creation_layers):      
         s = self.signal_creator[i](s)
     s = self.upscale_signal(s)
 
     # multiplex to destination
-    if self.all_ch_in_dst: 
+    if self.all_ch_dst: 
         x_dst_sig_ch = x_dst
     else:
         x_dst_feat_ch, x_dst_sig_ch = tf.split(x_src, [self.n_leaf_ca_channels,-1], axis=-1 )
