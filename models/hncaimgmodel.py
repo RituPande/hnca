@@ -116,7 +116,7 @@ class HCAImgModel(Model):
           # leaf_ca  is actuated from current parent ca state
           leaf_channels, leaf_schannels = self.actuator( parent_x, leaf_x )
           #parent ca detects feedback from current leaf ca state
-          parent_x = self.sensor(leaf_x , None )
+          parent_x = self.sensor(leaf_x , parent_x )
           #take 1 step of leaf and parent ca with new signals in each direction
           leaf_x = self.leaf_ca_model.step(leaf_channels, s=leaf_schannels, n_steps=1, update_rate=1.0, training_type='hca')
           parent_x = self.parent_ca_model.step(parent_x, s=None, n_steps=1, update_rate=1.0, training_type='hca')
@@ -311,7 +311,7 @@ class HCAImgModel(Model):
             parent_ca_history.append(loss_parent.numpy())
             leaf_ca_history.append(loss_leaf.numpy())
             training_vars = self.parent_ca_model.trainable_variables + self.sensor.trainable_variables + self.actuator.trainable_variables
-            gradients_hca = hca_tape.gradient(loss_hca,  training_vars ) 
+            gradients_hca = hca_tape.gradient(loss_hca,  training_vars, unconnected_gradients=tf.UnconnectedGradients.ZERO ) 
             grads = [g/(tf.norm(g)+1e-8) for g in gradients_hca]
             optimizer_hca.apply_gradients(zip(grads, training_vars))
 
