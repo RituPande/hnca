@@ -112,6 +112,7 @@ class Actuator(Model):
     out = (mixed_s_ch, None) if self.all_ch_dst else (x_dst_feat_ch, mixed_s_ch )
     return out
 
+"""
 class CAComm(Model):
     def __init__(self, n_leaf_ca_channels, n_leaf_ca_schannels, n_parent_ca_channels, config_params ):
 
@@ -258,6 +259,6 @@ class CAComm(Model):
         out = None 
 
       return out
-
+"""
 
 
