@@ -110,13 +110,13 @@ class HCAImgModel(Model):
         if parent_x is None:
           step_n = np.random.randint(self.leaf_ca_min_steps, self.leaf_ca_max_steps)
           leaf_x = tf.stop_gradient(self.leaf_ca_model.step(leaf_x,s=None,n_steps=step_n, training_type='hca'))
-          parent_x = self.sensor(leaf_x , None )
+          parent_x = self.sensor(tf.identity(leaf_x) , None )
           parent_x = self.parent_ca_model.step(parent_x, s=None, n_steps=1, update_rate=1.0, training_type='hca')
         else:
           # leaf_ca  is actuated from current parent ca state
-          leaf_channels, leaf_schannels = self.actuator( parent_x, leaf_x )
+          leaf_channels, leaf_schannels = self.actuator( tf.identity(parent_x), tf.identity(leaf_x) )
           #parent ca detects feedback from current leaf ca state
-          parent_x = self.sensor(leaf_x , parent_x )
+          parent_x = self.sensor(tf.identity(leaf_x) , tf.identity(parent_x) )
           #take 1 step of leaf and parent ca with new signals in each direction
           leaf_x = self.leaf_ca_model.step(leaf_channels, s=leaf_schannels, n_steps=1, update_rate=1.0, training_type='hca')
           parent_x = self.parent_ca_model.step(parent_x, s=None, n_steps=1, update_rate=1.0, training_type='hca')
@@ -286,7 +286,7 @@ class HCAImgModel(Model):
             loss_parent = self.parent_ca_loss(self.parent_ca_target_img, parent_x, is_image=True )
             loss_leaf = self.leaf_ca_loss(tf.identity(leaf_x) ) if loss_weightage[1] else tf.constant(0.0, dtype=tf.float32)
             loss_hca = loss_parent*loss_weightage[0] + loss_leaf*loss_weightage[1]
-            
+
         if use_pool :
           self.leaf_replay_buffer.add(leaf_x.numpy())
 
