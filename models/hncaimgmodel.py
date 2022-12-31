@@ -1,5 +1,5 @@
 from hnca.framework.ca import ImgCA
-from hnca.framework.losses import StyleLoss, MSELoss
+from hnca.framework.losses import StyleLoss, MSELoss, OTLoss
 from hnca.framework.utils import load_image, show_image, plot_loss, create_parent_seed 
 from hnca.framework.types import ReplayBuffer
 from hnca.framework.comm import Sensor, Actuator
@@ -88,10 +88,12 @@ class HCAImgModel(Model):
 
         if leaf_ca_loss_type is None:
           self.leaf_ca_loss= None
-        elif leaf_ca_loss_type in ['gram','ot']:
+        elif leaf_ca_loss_type in ['gram','style_ot']:
             self.leaf_ca_loss = StyleLoss( np.copy(self.leaf_ca_target_img), leaf_ca_loss_type )
         elif leaf_ca_loss_type == 'mse':
             self.leaf_ca_loss = MSELoss()
+        elif leaf_ca_loss_type == 'ot':
+            self.leaf_ca_loss = OTLoss()
         else :
             print("Leaf CA Loss type not supported")
         
