@@ -283,7 +283,7 @@ class HCAImgModel(Model):
             leaf_x, parent_x = self(leaf_x, None )
             for _ in tf.range(step_n-1):
                 leaf_x, parent_x = self(leaf_x, parent_x)
-            loss_parent = self.parent_ca_loss(self.parent_ca_target_img, parent_x )
+            loss_parent = self.parent_ca_loss(self.parent_ca_target_img, parent_x ) if loss_weightage[0] else tf.constant(0.0, dtype=tf.float32)
             loss_leaf = self.leaf_ca_loss(self.leaf_ca_target_img, tf.identity(leaf_x) ) if loss_weightage[1] else tf.constant(0.0, dtype=tf.float32)
             loss_hca = loss_parent*loss_weightage[0] + loss_leaf*loss_weightage[1]
 
