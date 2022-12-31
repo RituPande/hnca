@@ -15,8 +15,8 @@ class StyleLoss:
         self.loss_type = loss_type
        
 
-    def __call__(self, x  ):
-        #img = tf.clip_by_value(to_rgb(x)*255.0, 0, 255.0)
+    def __call__(self, target, x  ):
+        #target parameter is not used. It is present only for consistency of signature with mse loss
         img = to_rgb(x)*255.0
         loss = np.inf
         if self.loss_type in ['gram','ot']:
@@ -73,7 +73,7 @@ class StyleLoss:
 
 class MSELoss:
             
-    def __call__( self, target, x, is_image=False ):
+    def __call__( self, target, x, is_image=True ):
         pred = to_rgb(x)*255.0 if is_image else x
         loss =  tf.reduce_mean(tf.square(target - pred))
         return loss
