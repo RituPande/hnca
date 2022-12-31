@@ -85,14 +85,19 @@ class OTLoss:
     
     def __call__( self, y_true, y_pred, is_image=True ):
         y_pred = to_rgb(y_pred)*255.0 if is_image else y_pred
-        n_true, n_features = y_true.shape
-        n_pred, _ = y_pred.shape
-        p_vecs,_ = tf.linalg.normalize(tf.random.normal( shape=(n_features, self.n_directions ) ), axis = 0 )  # create  n_directions unit vectors with c dimensions
-        proj_true = tf.einsum('bnf,fp->bnp', y_true, p_vecs)
+
+        b, h, w , c = y_true.shape
+        y_true = tf.reshape( y_true, (b, h*w, c) )
+
+        b, h, w , c = y_pred.shape
+        y_pred = tf.reshape( y_pred, (b, h*w, c) )
+        
+        p_vecs,_ = tf.linalg.normalize(tf.random.normal( shape=(c, self.n_directions ) ), axis = 0 )  # create  n_directions unit vectors with c dimensions
+        proj_true = tf.einsum('bnc,cp->bnp', y_true, p_vecs)
         proj_true = tf.sort(proj_true) # sort on axis = -1
-        proj_pred = tf.einsum('bnf,fp->bnp', y_pred, p_vecs)
+        proj_pred = tf.einsum('bnc,cp->bnp', y_pred, p_vecs)
         proj_pred = tf.sort(proj_pred)
-        proj_true = self._resize_1d(proj_true, n_pred) # perform linear interpolation
+        #proj_true = self._resize_1d(proj_true, n_pred) # perform linear interpolation
         loss = tf.reduce_mean(tf.square(proj_true - proj_pred )) # loss for each pixel in each direction and take their mean
         loss = tf.cast(loss, dtype=tf.float32 ) # take mean of loss across all directions 
         return loss
