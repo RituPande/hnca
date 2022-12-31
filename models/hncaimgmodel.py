@@ -240,7 +240,7 @@ class HCAImgModel(Model):
             x = self.leaf_ca_model.step(x, s, n_steps=step_n, training_type='leaf')
             #overflow loss forces the model to output values within -1.0 and 1.0
             overflow_loss = tf.reduce_sum(tf.abs(x - tf.clip_by_value(x, -1.0, 1.0)))
-            loss = self.leaf_ca_loss(tf.identity(x)) # + overflow_loss*1e2
+            loss = self.leaf_ca_loss(self.leaf_ca_target_img, tf.identity(x)) # + overflow_loss*1e2
         if use_pool :
           self.leaf_replay_buffer.add(x.numpy())
 
