@@ -153,6 +153,7 @@ class HCAImgModel(Model):
         lr_sched = tf.keras.optimizers.schedules.PiecewiseConstantDecay([1000,2000], [lr, lr*0.3, lr*0.3*0.3])
         optimizer = tf.keras.optimizers.Adam(lr_sched, epsilon=1e-08)
         history = []
+        min_loss = np.inf
         for e in tqdm(range(num_epochs)):
             loss, tape = self._loss_step_leaf_ca(e, use_pool, batch_size)
             variables = self.leaf_ca_model.trainable_variables
@@ -160,6 +161,11 @@ class HCAImgModel(Model):
             grads = [g/(tf.norm(g)+1e-8) for g in grads]
             optimizer.apply_gradients(zip(grads, variables))
             history.append(loss.numpy())
+            if loss.numpy() < min_loss:
+              min_loss = loss.numpy()
+              print("min_loss:",loss.numpy())
+            else:
+              print("loss:",loss.numpy())
         
         return history
 
