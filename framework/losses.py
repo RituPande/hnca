@@ -19,11 +19,11 @@ class StyleLoss:
         #target parameter is not used. It is present only for consistency of signature with mse loss
         img = to_rgb(x)*255.0
         loss = np.inf
-        if self.loss_type in ['gram','ot']:
+        if self.loss_type in ['gram','style_ot']:
             img_style = self._calc_styles_vgg(img)
             if self.loss_type=='gram':
                 loss = [self._gram_loss(y_true,y_pred) for y_true, y_pred in zip(self.target_style, img_style)]
-            elif self.loss_type=='ot':   
+            elif self.loss_type=='style_ot':   
                 loss = [self._ot_loss(y_true,y_pred) for y_true, y_pred in zip(self.target_style, img_style)]
                                 
             else:
