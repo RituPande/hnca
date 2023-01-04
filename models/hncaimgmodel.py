@@ -337,12 +337,12 @@ class HCAImgModel(Model):
 
         return loss, t
 
-    def _loss_step_hca(self, curr_epoch, use_pool, batch_size, loss_weightage, reseed_freq):
+    def _loss_step_hca(self, curr_epoch, use_pool, batch_size, loss_weightage, seed_args):
         
         if use_pool:
             leaf_x = self.leaf_replay_buffer.sample_batch(batch_size)
-            if reseed_freq !=0 and curr_epoch % reseed_freq == 0:
-              leaf_x[:1]= self.leaf_ca_model.make_seed(self.leaf_img_target_size)
+            if seed_args['reseed_freq'] !=0 and curr_epoch % seed_args['reseed_freq'] == 0:
+              leaf_x[0]= seed_args['seed']
         else:
             leaf_x = self.leaf_ca_model.make_seed(self.leaf_img_target_size)
 
@@ -362,9 +362,9 @@ class HCAImgModel(Model):
         return loss_leaf, loss_parent, loss_hca, t
 
 
-    def train_hca( self, lr=1e-3, num_epochs= 2000, use_pool=True,\
+    def train_hca( self, seed_args, num_epochs= 2000, lr=1e-3, use_pool=True,\
                       batch_size=4, es_patience_cfg=500, lr_patience_cfg=250,\
-                        loss_weightage=[10,1], leaf_training_freq=4, reseed_freq=1 ):
+                        loss_weightage=[10,1] ):
 
         optimizer_leaf_ca = tf.keras.optimizers.Adam(learning_rate=lr)
         optimizer_hca = tf.keras.optimizers.Adam(learning_rate=lr)
@@ -375,7 +375,7 @@ class HCAImgModel(Model):
         lr_patience = lr_patience_cfg
         min_loss = np.inf
         for e in tqdm(tf.range(num_epochs)):
-            loss_leaf, loss_parent, loss_hca, hca_tape = self._loss_step_hca( e, use_pool, batch_size, loss_weightage , reseed_freq)
+            loss_leaf, loss_parent, loss_hca, hca_tape = self._loss_step_hca( e, use_pool, batch_size, loss_weightage , seed_args)
             hca_history.append(loss_hca.numpy())
             parent_ca_history.append(loss_parent.numpy())
             leaf_ca_history.append(loss_leaf.numpy())
@@ -383,13 +383,13 @@ class HCAImgModel(Model):
             gradients_hca = hca_tape.gradient(loss_hca,  training_vars, unconnected_gradients=tf.UnconnectedGradients.ZERO ) 
             grads = [g/(tf.norm(g)+1e-8) for g in gradients_hca]
             optimizer_hca.apply_gradients(zip(grads, training_vars))
-
-            if leaf_training_freq!=0 and  e % leaf_training_freq == 0:
+            """
+            if seed_args['leaf_training_freq']!=0 and  e % seed_args['leaf_training_freq'] == 0:
               loss_leaf_ca,leaf_ca_tape = self._loss_step_leaf_ca( e,use_pool, batch_size )
               gradients_leaf_ca = leaf_ca_tape.gradient(loss_leaf_ca, self.leaf_ca_model.trainable_variables)
               grads = [g/(tf.norm(g)+1e-8) for g in gradients_leaf_ca]
               optimizer_leaf_ca.apply_gradients(zip(grads, self.leaf_ca_model.trainable_variables))
-            
+            """
             if loss_hca + 1e-6 < min_loss:
               min_loss = loss_hca
               print("min_loss:",min_loss.numpy() )
