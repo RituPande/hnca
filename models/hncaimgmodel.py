@@ -342,7 +342,7 @@ class HCAImgModel(Model):
         if use_pool:
             leaf_x = self.leaf_replay_buffer.sample_batch(batch_size)
             if seed_args['reseed_freq'] !=0 and curr_epoch % seed_args['reseed_freq'] == 0:
-              leaf_x[0]= seed_args['seed']
+              leaf_x[0]= seed_args['seed'][0]
         else:
             leaf_x = self.leaf_ca_model.make_seed(self.leaf_img_target_size)
 
@@ -366,6 +366,11 @@ class HCAImgModel(Model):
                       batch_size=4, es_patience_cfg=500, lr_patience_cfg=250,\
                         loss_weightage=[10,1] ):
 
+        seed = seed_args['seed']
+        repeat_count = self.leaf_replay_buffer.maxlen
+        repeated_seeds = np.repeat(seed, repeat_count, axis=0)
+        self.leaf_replay_buffer.add(repeated_seeds)
+        
         optimizer_leaf_ca = tf.keras.optimizers.Adam(learning_rate=lr)
         optimizer_hca = tf.keras.optimizers.Adam(learning_rate=lr)
         hca_history = []
