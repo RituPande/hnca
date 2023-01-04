@@ -146,15 +146,19 @@ class HCAImgModel(Model):
 
         return leaf_x, parent_x 
     """
-    """  
-      def pretrain_leaf_ca( self, lr=1e-3, num_epochs= 5000, use_pool=True, batch_size=4):
+  
+    def pretrain_leaf_ca( self, seed_args, num_epochs= 5000,lr=1e-3, use_pool=True, batch_size=4):
 
+        seed = seed_args['seed']
+        repeat_count = self.leaf_replay_buffer.maxlen
+        repeated_seeds = np.repeat(seed, repeat_count, axis=0)
+        self.leaf_replay_buffer.add(repeated_seeds)
         lr_sched = tf.keras.optimizers.schedules.PiecewiseConstantDecay([1000,2000], [lr, lr*0.3, lr*0.3*0.3])
         optimizer = tf.keras.optimizers.Adam(lr_sched, epsilon=1e-08)
         history = []
         min_loss = np.inf
         for e in tqdm(range(num_epochs)):
-            loss, tape = self._loss_step_leaf_ca(e, use_pool, batch_size)
+            loss, tape = self._loss_step_leaf_ca(e, use_pool, batch_size, seed_args)
             variables = self.leaf_ca_model.trainable_variables
             grads = tape.gradient(loss, variables)
             grads = [g/(tf.norm(g)+1e-8) for g in grads]
@@ -220,12 +224,12 @@ class HCAImgModel(Model):
         
         return history
 
-  
+  """
 
     def pretrain_parent_ca(self, seed_args, start_epoch=0, lr=1e-3, num_epochs= 5000,\
                                    use_pool=True, batch_size=4,\
                                      es_patience_cfg=500, lr_patience_cfg=250,\
-                                      num_batches_per_epoch=8, min_loss=np.inf ):
+                                      num_batches_per_epoch=1, min_loss=np.inf ):
       
       optimizer = tf.keras.optimizers.Adam(learning_rate=lr, epsilon=1e-08, )
       history = []
