@@ -176,8 +176,8 @@ class HCAImgModel(Model):
         repeated_seeds = np.repeat(seed, repeat_count, axis=0)
         self.leaf_replay_buffer.add(repeated_seeds)
 
-        lr_sched = tf.keras.optimizers.schedules.PiecewiseConstantDecay([1000,2000], [lr, lr*0.3, lr*0.3*0.3])
-        optimizer = tf.keras.optimizers.Adam(lr_sched, epsilon=1e-08)
+        #lr_sched = tf.keras.optimizers.schedules.PiecewiseConstantDecay([1000,2000], [lr, lr*0.3, lr*0.3*0.3])
+        optimizer = tf.keras.optimizers.Adam(learning_rate=lr, epsilon=1e-08)
         history = []
         min_loss = np.inf
 
