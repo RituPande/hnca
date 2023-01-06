@@ -77,7 +77,7 @@ class HCAImgModel(Model):
         self.leaf_ca_target_img = load_image(leaf_ca_target)[None,:,:,:3]
         self.parent_ca_target_img = load_image(parent_ca_target)[None,:,:,:3]
 
-        self.leaf_replay_buffer = ReplayBuffer(max_len=1024)
+        self.leaf_replay_buffer = ReplayBuffer(max_len=4096)
         self.parent_replay_buffer = ReplayBuffer(max_len=20000)
         
         self._init_loss_objects(leaf_ca_loss_type, parent_ca_loss_type )
