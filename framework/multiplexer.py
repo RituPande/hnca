@@ -5,14 +5,21 @@ from keras.layers import Dense
 
 class SimpleMultiplexer(Model):
 
-  def __init__(self, n_features ):
+  def __init__(self, add_lr=False, n_features=0 ):
     super(SimpleMultiplexer,self).__init__()
-    self.n_features = n_features
-    initializer = tf.random_uniform_initializer(minval=-1.0 , maxval=1.0  )
-    self.lr = tf.Variable( initializer(shape=[1,n_features], dtype=tf.float32),  trainable=True)
+    self.add_lr=add_lr
+    if add_lr:
+      self.n_features = n_features
+      initializer = tf.random_uniform_initializer(minval=-1.0 , maxval=1.0  )
+      self.lr = tf.Variable( initializer(shape=[1,n_features], dtype=tf.float32),  trainable=True)
     
   def call(self, x_src, x_dst ):
-    out = x_dst + self.lr*x_src
+
+    if self.add_lr:
+      out = x_dst + self.lr*x_src
+    else:
+      out = x_src + x_dst
+      
     return out
 
 class CrossAttMultiplexer(Model):

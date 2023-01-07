@@ -30,8 +30,10 @@ class Sensor(Model):
 
     if multiplex_type is None:
       self.multiplexer = None
+    elif multiplex_type == 'adder':
+      self.multiplexer = SimpleMultiplexer( add_lr=False)
     elif multiplex_type == 'simple':
-      self.multiplexer = SimpleMultiplexer( n_features=n_parent_ca_channels)
+      self.multiplexer = SimpleMultiplexer( add_lr=True, n_features=n_parent_ca_channels)
     elif multiplex_type == 'cross_attention':
       self.multiplexer = CrossAttMultiplexer(d=16)
     else:
