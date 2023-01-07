@@ -85,10 +85,12 @@ class Actuator(Model):
     
     if multiplex_type is None:
       self.multiplexer = None
+    elif multiplex_type == 'adder':
+      self.multiplexer = SimpleMultiplexer()
     elif multiplex_type == 'simple':
       n = (n_leaf_ca_channels + n_leaf_ca_schannels) \
                                 if self.all_ch_dst else n_leaf_ca_schannels
-      self.multiplexer = SimpleMultiplexer( n_features=n)
+      self.multiplexer = SimpleMultiplexer( add_lr=True,  n_features=n)
     elif multiplex_type == 'cross_attention':
       self.multiplexer = CrossAttMultiplexer(d=16)
     else:
