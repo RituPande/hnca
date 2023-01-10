@@ -36,12 +36,12 @@ class ImgCA(Model):
             kernel = tf.repeat(kernel, self.outer.n_channels + self.outer.n_schannels , axis=2)
             return kernel
 
-    def __init__(self, n_channels, n_schannels, target_size, n_features=128 ):
+    def __init__(self, n_channels, n_schannels, target_size, n_features=128, trainable_perception=False ):
 
         super().__init__()
 
         self._init_ca_class_members(n_channels, n_schannels, target_size, n_features )
-        self._init_ca_layers()
+        self._init_ca_layers(trainable_perception)
         #dummy call to build the model
         self._build(n_channels, n_schannels, target_size)
         
@@ -53,7 +53,7 @@ class ImgCA(Model):
         self.n_features = n_features
         self.target_size = target_size
 
-    def _init_ca_layers( self  ):
+    def _init_ca_layers( self, trainable_perception ):
         if self.n_schannels > 0:
             self.combined_inp = Concatenate(axis=-1)
 
@@ -64,7 +64,9 @@ class ImgCA(Model):
                     depth_multiplier= 4,\
                             depthwise_initializer= ImgCA.PerceptionKernelInitializer(self))
 
-        self.perception.trainable = False
+        if not trainable_perception:
+          self.perception.trainable = False
+
         self.bn1 =  BatchNormalization()
         self.features =  Conv2D(filters=self.n_features,\
                 kernel_size=1,\
