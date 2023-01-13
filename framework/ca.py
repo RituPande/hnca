@@ -108,16 +108,16 @@ class ImgCA(Model):
         
         if s is not None:
             x = self.combined_inp([x,s])
-
+        
         x_pad = self._circular_pad(x,1)
-        inp = self.bn0(x_pad)
-        y = self.perception(inp)
+        y = self.bn0(x_pad)
+        y = self.perception(y)
         y = self.bn1(y)
         y = self.features(y)
         y = self.bn2(y)
         y = self.new_state(y)
         if self.skip_connection:
-          y = y + inp
+          y = y + x
         y = y*udpate_mask + x
                  
         return y
