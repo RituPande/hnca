@@ -36,24 +36,23 @@ class ImgCA(Model):
             kernel = tf.repeat(kernel, self.outer.n_channels + self.outer.n_schannels , axis=2)
             return kernel
 
-    def __init__(self, n_channels, n_schannels, target_size, n_features=128, trainable_perception=False, skip_connection=False ):
+    def __init__(self, n_channels, n_schannels, target_size, n_features=128, trainable_perception=False ):
 
         super().__init__()
 
-        self._init_ca_class_members(n_channels, n_schannels, target_size, n_features, skip_connection )
+        self._init_ca_class_members(n_channels, n_schannels, target_size, n_features )
         self._init_ca_layers(trainable_perception)
         #dummy call to build the model
         self._build(n_channels, n_schannels, target_size)
         
    
-    def _init_ca_class_members(self, n_channels ,n_schannels, target_size, n_features, skip_connection):
+    def _init_ca_class_members(self, n_channels ,n_schannels, target_size, n_features):
         
         self.n_channels = n_channels
         self.n_schannels = n_schannels
         self.n_features = n_features
         self.target_size = target_size
-        self.skip_connection = skip_connection
-
+       
     def _init_ca_layers( self, trainable_perception ):
         if self.n_schannels > 0:
             self.combined_inp = Concatenate(axis=-1)
@@ -116,8 +115,6 @@ class ImgCA(Model):
         y = self.features(y)
         y = self.bn2(y)
         y = self.new_state(y)
-        if self.skip_connection:
-          y = y + x
         y = y*udpate_mask + x
                  
         return y
