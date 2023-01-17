@@ -420,14 +420,9 @@ class HCAImgModel(Model):
         return leaf_ca_history, parent_ca_history, hca_history
 
 
-    def step( self, x_initial, num_steps=50 ):
-        leaf_x = x_initial
-        
-        #if leaf_x is None:
-        #  leaf_x = self.leaf_ca_model.make_seed(self.leaf_img_target_size, n=1)
-         
-        leaf_x, parent_x = self(leaf_x,None)
-        for _ in tf.range(num_steps-1):
+    def step( self, leaf_x, parent_x, num_steps=50 ):
+                
+        for _ in tf.range(num_steps):
             leaf_x, parent_x = self(leaf_x, parent_x)
 
         return leaf_x, parent_x
