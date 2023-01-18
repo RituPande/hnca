@@ -50,7 +50,7 @@ class HCAImgModel(Model):
         self.parent_ca_model =  ImgCA(n_channels=n_parent_ca_channels,\
                                         n_schannels=0,\
                                           target_size=self.parent_img_target_size, \
-                                             n_features=64,\
+                                             n_features=256,\
                                               trainable_perception=True )
 
         self.sensor = Sensor( n_leaf_ca_channels, n_parent_ca_channels,\
