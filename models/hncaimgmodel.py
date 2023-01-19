@@ -425,10 +425,10 @@ class HCAImgModel(Model):
         return leaf_ca_history, parent_ca_history, hca_history
 
 
-    def step( self, leaf_x, parent_x, num_steps=50 ):
+    def step( self, leaf_x, parent_x, num_steps=50, leaf_ca_sig_threshold=1 ):
                 
         for _ in tf.range(num_steps):
-            leaf_x, parent_x = self(leaf_x, parent_x, leaf_ca_sig_threshold=1)
+            leaf_x, parent_x = self(leaf_x, parent_x, leaf_ca_sig_threshold)
 
         return leaf_x, parent_x
     
