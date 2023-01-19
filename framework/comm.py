@@ -69,8 +69,8 @@ class Actuator(Model):
     self.all_ch_dst = all_ch_dst
     self.signal_factor = signal_factor
     self.n_sig_creation_layers = n_sig_creation_layers
-
-    
+    self.n_leaf_ca_channels = n_leaf_ca_channels
+       
     n_actuation_filters = (n_leaf_ca_channels + n_leaf_ca_schannels) \
                                 if self.all_ch_dst else n_leaf_ca_schannels
 
@@ -109,7 +109,7 @@ class Actuator(Model):
     if self.all_ch_dst: 
         x_dst_sig_ch = x_dst
     else:
-        x_dst_feat_ch, x_dst_sig_ch = tf.split(x_src, [self.n_leaf_ca_channels,-1], axis=-1 )
+        x_dst_feat_ch, x_dst_sig_ch = tf.split(x_dst, [self.n_leaf_ca_channels,-1], axis=-1 )
         
     mixed_s_ch = s  if x_dst_sig_ch is None or self.multiplexer==None else self.multiplexer(s, x_dst_sig_ch) 
    
