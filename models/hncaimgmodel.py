@@ -82,7 +82,7 @@ class HCAImgModel(Model):
         self.parent_replay_buffer = ReplayBuffer(max_len=20000)
         
         self._init_loss_objects(leaf_ca_loss_type, parent_ca_loss_type )
-
+        self._build(leaf_img_target_size, n_leaf_ca_channels+ n_leaf_ca_schannels )
         
     def _init_loss_objects(self, leaf_ca_loss_type, parent_ca_loss_type ):
 
@@ -107,10 +107,15 @@ class HCAImgModel(Model):
             print("Parent CA Loss type not supported")
 
 
-    def call( self, leaf_x, parent_x):
+    def _build(self, leaf_img_target_size, n_leaf_ca_channels):
+      leaf_x = np.zeros((1, leaf_img_target_size, leaf_img_target_size, n_leaf_ca_channels) )
+      leaf_x,parent_x = self( leaf_x, None,leaf_ca_sig_threshold=1 )
+      leaf_x,parent_x = self( leaf_x, parent_x)
+
+    def call( self, leaf_x, parent_x, leaf_ca_sig_threshold=50):
         # create leaf_x and parent_x for the first time
         if parent_x is None:
-          step_n = np.random.randint(self.leaf_ca_min_steps, self.leaf_ca_max_steps)
+          step_n = leaf_ca_sig_threshold 
           leaf_x = tf.stop_gradient(self.leaf_ca_model.step(leaf_x,s=None,n_steps=step_n, training_type='hca'))
           parent_x = self.sensor(tf.identity(leaf_x) , None )
           parent_x = self.parent_ca_model.step(parent_x, s=None, n_steps=1, update_rate=1.0, training_type='hca')
@@ -423,7 +428,7 @@ class HCAImgModel(Model):
     def step( self, leaf_x, parent_x, num_steps=50 ):
                 
         for _ in tf.range(num_steps):
-            leaf_x, parent_x = self(leaf_x, parent_x)
+            leaf_x, parent_x = self(leaf_x, parent_x, leaf_ca_sig_threshold=1)
 
         return leaf_x, parent_x
     
