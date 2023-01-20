@@ -29,7 +29,7 @@ class HCAImgModel(Model):
 
     def __init__( self,leaf_ca_target,parent_ca_target,\
                           comm_cfg_params,\
-                            leaf_img_target_size=128,parent_img_target_size=32,\
+                            leaf_img_target_size=128,\
                                 leaf_ca_min_steps=32, leaf_ca_max_steps=96,\
                                     parent_ca_min_steps=32, parent_ca_max_steps=96,\
                                         hca_min_steps=32, hca_max_steps=96,\
@@ -40,7 +40,7 @@ class HCAImgModel(Model):
         super(HCAImgModel,self).__init__()
 
         self.leaf_img_target_size = leaf_img_target_size
-        self.parent_img_target_size = parent_img_target_size
+        self.parent_img_target_size = leaf_img_target_size//comm_cfg_params['signal_factor']
         # n_features for leaf_ca = (n_channels + n_schannels)*4
         self.leaf_ca_model =  ImgCA(n_channels=n_leaf_ca_channels,\
                                         n_schannels=n_leaf_ca_schannels,\
@@ -358,7 +358,7 @@ class HCAImgModel(Model):
             leaf_x, parent_x = self(leaf_x, None )
             for _ in tf.range(step_n-1):
                 leaf_x, parent_x = self(leaf_x, parent_x)
-            loss_parent = self.parent_ca_loss(self.parent_ca_target_img, parent_x ) if loss_weightage[0] else tf.constant(0.0, dtype=tf.float32)
+            loss_parent = self.parent_ca_loss(self.parent_ca_target_img, leaf_x ) if loss_weightage[0] else tf.constant(0.0, dtype=tf.float32)
             loss_leaf = self.leaf_ca_loss(self.leaf_ca_target_img, tf.identity(leaf_x) ) if loss_weightage[1] else tf.constant(0.0, dtype=tf.float32)
             loss_hca = loss_parent*loss_weightage[0] + loss_leaf*loss_weightage[1]
 
