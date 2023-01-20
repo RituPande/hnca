@@ -99,10 +99,12 @@ class HCAImgModel(Model):
         
         if parent_ca_loss_type is None:
             self.parent_ca_loss = None 
-        elif parent_ca_loss_type in ['gram','ot']:
+        elif parent_ca_loss_type in ['gram','style_ot']:
             self.parent_ca_loss = StyleLoss( np.copy(self.parent_ca_target_img), parent_ca_loss_type )
         elif parent_ca_loss_type == 'mse':
             self.parent_ca_loss = MSELoss()
+        elif parent_ca_loss_type == 'ot':
+            self.parent_ca_loss = OTLoss()
         else :
             print("Parent CA Loss type not supported")
 
