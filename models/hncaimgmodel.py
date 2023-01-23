@@ -345,7 +345,7 @@ class HCAImgModel(Model):
 
         return loss, t
 
-    def _loss_step_hca(self, curr_epoch, use_pool, batch_size, loss_weightage, seed_args):
+    def _loss_step_hca(self, curr_epoch, use_pool, batch_size, loss_weightage, seed_args, step_reg):
         
         if use_pool:
             leaf_x = self.leaf_replay_buffer.sample_batch(batch_size)
@@ -357,7 +357,7 @@ class HCAImgModel(Model):
         step_n = np.random.randint(self.hca_min_steps, self.hca_max_steps)
         
         leaf_x_reg = []
-        step_reg = 1
+        
         with tf.GradientTape() as t:
             leaf_x, parent_x = self(leaf_x, None )
             for i in tf.range(step_n-1):
@@ -385,7 +385,7 @@ class HCAImgModel(Model):
 
     def train_hca( self, seed_args, num_epochs= 2000, lr=1e-3, use_pool=True,\
                       batch_size=4, es_patience_cfg=500, lr_patience_cfg=250,\
-                        loss_weightage=[10,1] ):
+                        loss_weightage=[10,1], step_reg=1 ):
 
         seed = seed_args['seed']
         repeat_count = self.leaf_replay_buffer.maxlen
@@ -401,7 +401,7 @@ class HCAImgModel(Model):
         lr_patience = lr_patience_cfg
         min_loss = np.inf
         for e in tqdm(tf.range(num_epochs)):
-            loss_leaf, loss_parent, loss_hca, hca_tape = self._loss_step_hca( e, use_pool, batch_size, loss_weightage , seed_args)
+            loss_leaf, loss_parent, loss_hca, hca_tape = self._loss_step_hca( e, use_pool, batch_size, loss_weightage , seed_args, step_reg)
             hca_history.append(loss_hca.numpy())
             parent_ca_history.append(loss_parent.numpy())
             leaf_ca_history.append(loss_leaf.numpy())
