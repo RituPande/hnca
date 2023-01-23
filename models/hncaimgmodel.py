@@ -356,18 +356,31 @@ class HCAImgModel(Model):
 
         step_n = np.random.randint(self.hca_min_steps, self.hca_max_steps)
         
+        leaf_x_reg = []
+        step_reg = 1
         with tf.GradientTape() as t:
             leaf_x, parent_x = self(leaf_x, None )
-            for _ in tf.range(step_n-1):
+            for i in tf.range(step_n-1):
                 leaf_x, parent_x = self(leaf_x, parent_x)
+                if step_reg !=0 and i% step_reg == 0 and i != step_n-2:
+                  leaf_x_reg.append(leaf_x)
             loss_parent = self.parent_ca_loss(self.parent_ca_target_img, leaf_x ) if loss_weightage[0] else tf.constant(0.0, dtype=tf.float32)
-            loss_leaf = self.leaf_ca_loss(self.leaf_ca_target_img, tf.identity(leaf_x) ) if loss_weightage[1] else tf.constant(0.0, dtype=tf.float32)
+            loss_leaf = self._regularization(leaf_x_reg) if loss_weightage[1] else tf.constant(0.0, dtype=tf.float32)
             loss_hca = loss_parent*loss_weightage[0] + loss_leaf*loss_weightage[1]
 
         if use_pool :
           self.leaf_replay_buffer.add(leaf_x.numpy())
 
         return loss_leaf, loss_parent, loss_hca, t
+
+    def _regularization( self, leaf_x_reg ):
+
+      reg = 0
+      for leaf_frame in leaf_x_reg:
+        reg += self.leaf_ca_loss(self.leaf_ca_target_img, leaf_frame )
+      
+      out = reg/len(leaf_x_reg)
+      return out
 
 
     def train_hca( self, seed_args, num_epochs= 2000, lr=1e-3, use_pool=True,\
