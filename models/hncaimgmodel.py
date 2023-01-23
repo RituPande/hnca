@@ -365,7 +365,7 @@ class HCAImgModel(Model):
                 if step_reg !=0 and i% step_reg == 0 and i != step_n-2:
                   leaf_x_reg.append(leaf_x)
             loss_parent = self.parent_ca_loss(self.parent_ca_target_img, leaf_x ) if loss_weightage[0] else tf.constant(0.0, dtype=tf.float32)
-            loss_leaf = self._regularization(leaf_x_reg) if loss_weightage[1] or len(leaf_x_reg) > 0  else tf.constant(0.0, dtype=tf.float32)
+            loss_leaf = self._regularization(leaf_x_reg) if loss_weightage[1] and len(leaf_x_reg) > 0  else tf.constant(0.0, dtype=tf.float32)
             loss_hca = loss_parent*loss_weightage[0] + loss_leaf*loss_weightage[1]
 
         if use_pool :
