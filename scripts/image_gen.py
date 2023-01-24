@@ -58,12 +58,13 @@ RetVal:
 List containing  'num_circle' tuples (x,y,r)
 
 """
-def gen_circle(img_height, img_width, n, r=None ):
+def gen_circle(img_height, img_width, n, r=None, center_y=None, center_x=None ):
 
-    assert img_height and img_width > 20 and n %2 == 0
 
-    center_y = img_height//2
-    center_x = img_width//2
+    if center_y is not None and center_x is not None:
+      assert img_height and img_width > 20 and n %2 == 0
+      center_y = img_height//2
+      center_x = img_width//2
 
     if r is None: r = min(center_y, center_x) - 5
 
@@ -147,6 +148,7 @@ def fillCircles( img, circles, colors, target_points):
     
     color_index = 0
     circle_index = 0
+    num_colors = len(colors)
     for c in circles:
         x,y,r = c
         if target_points is not None:
@@ -158,6 +160,38 @@ def fillCircles( img, circles, colors, target_points):
             color_index = 0
         circle_index += 1
     return img
+
+
+def fillStars(img, circles, colors):
+
+    circle_index = 0
+    num_colors = len(colors)
+    for c in circles:
+        x,y,r = c
+        points = gen_circle(img_height=None, img_width=None, n=6, r=r, center_y=y, center_x=x )
+        cv2.drawContours(img,[points[0],points[2],points[4] ], 0, colors[circle_index],  -1 )
+        cv2.drawContours(img,[points[1],points[3],points[5] ], 0, colors[circle_index],  -1 )
+
+        color_index += 1
+        if color_index % num_colors == 0:
+            color_index = 0
+        circle_index += 1
+
+
+def create_star_image(image_width = 224 ,image_height= 224, num_circles=10, num_colors = 2, min_radius=5, max_radius=10, bg=52, save_img=True, target_points=None, colors=None):
+
+  img = np.full((image_height,image_width, 3),bg , dtype=np.uint8 )
+  noise = np.random.randint(0,5,size=(image_height,image_width, 3), dtype=np.uint8)
+    
+  circles = create_random_circles(image_width, image_height, num_circles, min_radius, max_radius)
+  if colors is None:
+    colors = get_unique_colors(num_colors)
+  img = fillStars(img, circles, colors, None)
+  img += noise
+  if save_img:
+        cv2.imwrite('../img/hca_target_img.png',img)
+
+
 
 """
 Description:
@@ -248,9 +282,13 @@ if __name__ == '__main__':
         points = gen_concentric_circle( image_height, image_width, num_circles )
     elif target == 3:
         points = gen_circles_in_quad(image_height, image_width, num_circles )
+    elif target == 4:
+        colors = [(9,230,199), ( 250, 3, 185)]
+        create_star_image(image_width,image_height,num_circles,num_colors,min_radius,max_radius,background, save_img, None, colors)
+
     else:
         print("No target input")
-    if target is not 0:
+    if target is not 0 or 4:
       colors = [(9,230,199), ( 250, 3, 185)]
       create_image(image_width,image_height,num_circles,num_colors,min_radius,max_radius,background, save_img, points, colors)
     if args.pool:
