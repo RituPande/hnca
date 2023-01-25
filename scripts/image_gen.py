@@ -186,7 +186,7 @@ def create_star_image(image_width = 224 ,image_height= 224, num_circles=10, num_
   circles = create_random_circles(image_width, image_height, num_circles, min_radius, max_radius)
   if colors is None:
     colors = get_unique_colors(num_colors)
-  img = fillStars(img, circles, colors, None)
+  img = fillStars(img, circles, colors)
   img += noise
   if save_img:
         cv2.imwrite('../img/hca_target_img.png',img)
