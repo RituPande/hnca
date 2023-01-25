@@ -114,21 +114,21 @@ class HCAImgModel(Model):
       leaf_x,parent_x = self( leaf_x, None,leaf_ca_sig_threshold=1 )
       leaf_x,parent_x = self( leaf_x, parent_x)
 
-    def call( self, leaf_x, parent_x, leaf_ca_sig_threshold=50):
+    def call( self, leaf_x, parent_x, leaf_ca_sig_threshold=50, update_rate=0.5):
         # create leaf_x and parent_x for the first time
         if parent_x is None:
           step_n = leaf_ca_sig_threshold 
           leaf_x = tf.stop_gradient(self.leaf_ca_model.step(leaf_x,s=None,n_steps=step_n, training_type='hca'))
           parent_x = self.sensor(tf.identity(leaf_x) , None )
-          parent_x = self.parent_ca_model.step(parent_x, s=None, n_steps=1, update_rate=0.75, training_type='hca')
+          parent_x = self.parent_ca_model.step(parent_x, s=None, n_steps=1, update_rate=update_rate, training_type='hca')
         else:
           # leaf_ca  is actuated from current parent ca state
           leaf_channels, leaf_schannels = self.actuator( tf.identity(parent_x), tf.identity(leaf_x) )
           #parent ca detects feedback from current leaf ca state
           parent_x = self.sensor(tf.identity(leaf_x) , tf.identity(parent_x) )
           #take 1 step of leaf and parent ca with new signals in each direction
-          leaf_x = self.leaf_ca_model.step(leaf_channels, s=leaf_schannels, n_steps=1, update_rate=0.75, training_type='hca')
-          parent_x = self.parent_ca_model.step(parent_x, s=None, n_steps=1, update_rate=0.75, training_type='hca')
+          leaf_x = self.leaf_ca_model.step(leaf_channels, s=leaf_schannels, n_steps=1, update_rate=update_rate, training_type='hca')
+          parent_x = self.parent_ca_model.step(parent_x, s=None, n_steps=1, update_rate=update_rate, training_type='hca')
 
         return leaf_x, parent_x 
 
@@ -385,7 +385,7 @@ class HCAImgModel(Model):
 
     def train_hca( self, seed_args, num_epochs= 2000, lr=1e-3, use_pool=True,\
                       batch_size=4, es_patience_cfg=500, lr_patience_cfg=250,\
-                        loss_weightage=[10,1], step_reg=1 ):
+                        loss_weightage=[10,1], step_reg=1, update_rate=0.5 ):
 
         seed = seed_args['seed']
         repeat_count = self.leaf_replay_buffer.maxlen
@@ -401,7 +401,7 @@ class HCAImgModel(Model):
         lr_patience = lr_patience_cfg
         min_loss = np.inf
         for e in tqdm(tf.range(num_epochs)):
-            loss_leaf, loss_parent, loss_hca, hca_tape = self._loss_step_hca( e, use_pool, batch_size, loss_weightage , seed_args, step_reg)
+            loss_leaf, loss_parent, loss_hca, hca_tape = self._loss_step_hca( e, use_pool, batch_size, loss_weightage , seed_args, step_reg, update_rate)
             hca_history.append(loss_hca.numpy())
             parent_ca_history.append(loss_parent.numpy())
             leaf_ca_history.append(loss_leaf.numpy())
