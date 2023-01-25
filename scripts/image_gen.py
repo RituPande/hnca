@@ -289,13 +289,12 @@ if __name__ == '__main__':
     elif target == 4:
         colors = [(9,230,199), ( 250, 3, 185)]
         create_star_image(image_width,image_height,num_circles,num_colors,min_radius,max_radius,background, save_img, None, colors)
-
     else:
         print("No target input")
-    if target != 0 or target != 4:
+    if target != 0 and target != 4:
       colors = [(9,230,199), ( 250, 3, 185)]
       create_image(image_width,image_height,num_circles,num_colors,min_radius,max_radius,background, save_img, points, colors)
-    if args.pool:
-      create_pooled_img(args.pool)
+      if args.pool:
+        create_pooled_img(args.pool)
 
 
