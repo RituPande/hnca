@@ -61,7 +61,7 @@ List containing  'num_circle' tuples (x,y,r)
 def gen_circle(img_height, img_width, n, r=None, center_y=None, center_x=None ):
 
 
-    if center_y is not None and center_x is not None:
+    if center_y == None and center_x  == None:
       assert img_height and img_width > 20 and n %2 == 0
       center_y = img_height//2
       center_x = img_width//2
