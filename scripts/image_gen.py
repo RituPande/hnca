@@ -163,7 +163,6 @@ def fillCircles( img, circles, colors, target_points):
 
 
 def fillStars(img, circles, colors):
-
     
     color_index = 0
     num_colors = len(colors)
@@ -174,7 +173,14 @@ def fillStars(img, circles, colors):
         cv2.fillPoly(img, np.int32([p1]), colors[color_index])
         p2 = np.array([[points[1],points[3],points[5]]])
         cv2.fillPoly(img, np.int32([p2]), colors[color_index] )
-
+        # draw tail
+        """
+        theta = random.randint(0,360)
+        theta = (np.pi/180)*theta
+        y_tail = y + (r+3)* np.sin(theta)
+        x_tail = x + (r+3)* np.cos(theta)
+        cv2.line(img, (np.int32(y), np.int32(x)), (np.int32(y_tail),np.int32(x_tail)), colors[color_index], 2 )
+        """
         color_index += 1
         if color_index % num_colors == 0:
             color_index = 0
