@@ -288,7 +288,7 @@ if __name__ == '__main__':
 
     else:
         print("No target input")
-    if target is not 0 or 4:
+    if target != 0 or target != 4:
       colors = [(9,230,199), ( 250, 3, 185)]
       create_image(image_width,image_height,num_circles,num_colors,min_radius,max_radius,background, save_img, points, colors)
     if args.pool:
