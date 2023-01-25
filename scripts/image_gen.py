@@ -164,18 +164,22 @@ def fillCircles( img, circles, colors, target_points):
 
 def fillStars(img, circles, colors):
 
-    circle_index = 0
+    
+    color_index = 0
     num_colors = len(colors)
     for c in circles:
         x,y,r = c
         points = gen_circle(img_height=None, img_width=None, n=6, r=r, center_y=y, center_x=x )
-        cv2.drawContours(img,[points[0],points[2],points[4] ], 0, colors[circle_index],  -1 )
-        cv2.drawContours(img,[points[1],points[3],points[5] ], 0, colors[circle_index],  -1 )
+        p1 = np.array([points[0],points[2],points[4]])
+        cv2.fillPoly(img, np.int32([p1]), colors[color_index])
+        p2 = np.array([[points[1],points[3],points[5]]])
+        cv2.fillPoly(img, np.int32([p2]), colors[color_index] )
 
         color_index += 1
         if color_index % num_colors == 0:
             color_index = 0
-        circle_index += 1
+    return img
+       
 
 
 def create_star_image(image_width = 224 ,image_height= 224, num_circles=10, num_colors = 2, min_radius=5, max_radius=10, bg=52, save_img=True, target_points=None, colors=None):
