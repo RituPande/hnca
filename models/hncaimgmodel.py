@@ -345,7 +345,7 @@ class HCAImgModel(Model):
 
         return loss, t
 
-    def _loss_step_hca(self, curr_epoch, use_pool, batch_size, loss_weightage, seed_args, step_reg):
+    def _loss_step_hca(self, curr_epoch, use_pool, batch_size, loss_weightage, seed_args, step_reg, update_rate):
         
         if use_pool:
             leaf_x = self.leaf_replay_buffer.sample_batch(batch_size)
@@ -359,9 +359,9 @@ class HCAImgModel(Model):
         leaf_x_reg = []
         
         with tf.GradientTape() as t:
-            leaf_x, parent_x = self(leaf_x, None )
+            leaf_x, parent_x = self(leaf_x, None, update_rate=update_rate )
             for i in tf.range(step_n-1):
-                leaf_x, parent_x = self(leaf_x, parent_x)
+                leaf_x, parent_x = self(leaf_x, parent_x, update_rate=update_rate)
                 if step_reg !=0 and i% step_reg == 0 and i != step_n-2:
                   leaf_x_reg.append(leaf_x)
             loss_parent = self.parent_ca_loss(self.parent_ca_target_img, leaf_x ) if loss_weightage[0] else tf.constant(0.0, dtype=tf.float32)
