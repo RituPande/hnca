@@ -361,15 +361,15 @@ class HCAImgModel(Model):
         with tf.GradientTape() as t:
             leaf_x, parent_x = self(leaf_x, None, update_rate=update_rate )
 
-            prev_r = tf.sum(leaf_x[..., 0])
-            prev_g = tf.sum(leaf_x[..., 1])
-            prev_b = tf.sum(leaf_x[..., 2])
+            prev_r = tf.reduce_sum(leaf_x[..., 0])
+            prev_g = tf.reduce_sum(leaf_x[..., 1])
+            prev_b = tf.reduce_sum(leaf_x[..., 2])
 
             for i in tf.range(step_n-1):
                 leaf_x, parent_x = self(leaf_x, parent_x, update_rate=update_rate)
-                new_r = tf.sum(leaf_x[..., 0])
-                new_g = tf.sum(leaf_x[..., 1])
-                new_b = tf.sum(leaf_x[..., 2])
+                new_r = tf.reduce_sum(leaf_x[..., 0])
+                new_g = tf.reduce_sum(leaf_x[..., 1])
+                new_b = tf.reduce_sum(leaf_x[..., 2])
 
                 if step_reg !=0 and i% step_reg == 0 and i != step_n-2:
                   sum_reg += (new_r-prev_r) + (new_g-prev_g) + (new_b-prev_b)
