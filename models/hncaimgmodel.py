@@ -356,16 +356,30 @@ class HCAImgModel(Model):
 
         step_n = np.random.randint(self.hca_min_steps, self.hca_max_steps)
         
-        leaf_x_reg = []
-        
+        sum_reg = 0
+       
         with tf.GradientTape() as t:
             leaf_x, parent_x = self(leaf_x, None, update_rate=update_rate )
+
+            prev_r = tf.sum(leaf_x[..., 0])
+            prev_g = tf.sum(leaf_x[..., 1])
+            prev_b = tf.sum(leaf_x[..., 2])
+
             for i in tf.range(step_n-1):
                 leaf_x, parent_x = self(leaf_x, parent_x, update_rate=update_rate)
+                new_r = tf.sum(leaf_x[..., 0])
+                new_g = tf.sum(leaf_x[..., 1])
+                new_b = tf.sum(leaf_x[..., 2])
+
                 if step_reg !=0 and i% step_reg == 0 and i != step_n-2:
-                  leaf_x_reg.append(leaf_x)
+                  sum_reg += (new_r-prev_r) + (new_g-prev_g) + (new_b-prev_b)
+                prev_r = new_r
+                prev_g = new_g
+                prev_b = new_b
+                 
+            print("sum_reg:", sum_reg.numpy())
             loss_parent = self.parent_ca_loss(self.parent_ca_target_img, leaf_x ) if loss_weightage[0] else tf.constant(0.0, dtype=tf.float32)
-            loss_leaf = self._regularization(leaf_x_reg) if loss_weightage[1] and len(leaf_x_reg) > 0  else tf.constant(0.0, dtype=tf.float32)
+            loss_leaf = sum_reg if loss_weightage[1] and step_reg > 0  else tf.constant(0.0, dtype=tf.float32)
             loss_hca = loss_parent*loss_weightage[0] + loss_leaf*loss_weightage[1]
 
         if use_pool :
