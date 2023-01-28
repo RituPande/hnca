@@ -372,7 +372,7 @@ class HCAImgModel(Model):
                 new_b = tf.reduce_sum(leaf_x[..., 2])
 
                 if step_reg !=0 and i% step_reg == 0 and i != step_n-2:
-                  sum_reg += (new_r-prev_r) + (new_g-prev_g) + (new_b-prev_b)
+                  sum_reg += (new_r-prev_r)**2 + (new_g-prev_g)**2 + (new_b-prev_b)**2
                 prev_r = new_r
                 prev_g = new_g
                 prev_b = new_b
