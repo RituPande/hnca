@@ -191,11 +191,33 @@ def create_pattern_image(image_width = 128 ,image_height= 128, num_circles=10, n
    img = np.full((image_height,image_width, 3),bg , dtype=np.uint8 )
    noise = np.random.randint(0,5,size=(image_height,image_width, 3), dtype=np.uint8)  
 
-   points  = gen_circle(image_height, image_width, n=3, r=5, center_y=None, center_x=None )
-   circles = []
-   r = 5
-   for p in points:
-     circles.append((p[1], p[0], r-1 ))
+   r = 10
+   point_list = []
+   points  = gen_circle(image_height, image_width, n=5, r=r, center_y=image_height//2, center_x=image_width//2 )
+   point_list.append(points)
+   points  = gen_circle(image_height, image_width, n=5, r=r, center_y=image_height//4, center_x=image_width//4 )
+   point_list.append(points)
+   points  = gen_circle(image_height, image_width, n=5, r=r, center_y=image_height//4, center_x=np.int32(0.75*image_width) )
+   point_list.append(points)
+   points  = gen_circle(image_height, image_width, n=5, r=r, center_y=np.int32(0.75*image_height), center_x=np.int32(0.75*image_width) )
+   point_list.append(points)
+   points  = gen_circle(image_height, image_width, n=5, r=r, center_y=np.int32(0.75*image_height), center_x=image_width//4 )
+   point_list.append(points)
+
+   color_index = 0
+
+   for points in point_list:
+      for p in points:
+          x =  np.int32(p[1])
+          y  = np.int32(p[0])
+          cv2.circle(img, (x,y) , 5 , colors[color_index], cv2.FILLED)
+          color_index += 1
+          if color_index % num_colors == 0:
+            color_index = 0
+   img += noise
+   if save_img:
+      cv2.imwrite('../img/hca_target_img.png',img)
+
 
  
     
@@ -310,9 +332,12 @@ if __name__ == '__main__':
     elif target == 4:
         colors = [(9,230,199), ( 250, 3, 185)]
         create_star_image(image_width,image_height,num_circles,num_colors,min_radius,max_radius,background, save_img, None, colors)
+    elif target == 5:
+        colors = [(9,230,199), ( 250, 3, 185)]
+        create_pattern_image(image_width,image_height,num_circles,num_colors,min_radius,max_radius,background, save_img, None, colors)
     else:
         print("No target input")
-    if target != 0 and target != 4:
+    if target != 0 and target < 4:
       colors = [(9,230,199), ( 250, 3, 185)]
       create_image(image_width,image_height,num_circles,num_colors,min_radius,max_radius,background, save_img, points, colors)
       if args.pool:
