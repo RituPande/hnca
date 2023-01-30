@@ -187,6 +187,21 @@ def fillStars(img, circles, colors):
     return img
        
 
+def create_pattern_image(image_width = 128 ,image_height= 128, num_circles=10, num_colors = 2, min_radius=5, max_radius=10, bg=52, save_img=True, target_points=None, colors=None):
+   img = np.full((image_height,image_width, 3),bg , dtype=np.uint8 )
+   noise = np.random.randint(0,5,size=(image_height,image_width, 3), dtype=np.uint8)  
+
+   points  = gen_circle(image_height, image_width, n=3, r=5, center_y=None, center_x=None )
+   circles = []
+   r = 5
+   for p in points:
+     circles.append((p[1], p[0], r-1 ))
+
+ 
+    
+
+   
+
 
 def create_star_image(image_width = 224 ,image_height= 224, num_circles=10, num_colors = 2, min_radius=5, max_radius=10, bg=52, save_img=True, target_points=None, colors=None):
 
