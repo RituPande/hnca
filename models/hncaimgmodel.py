@@ -155,7 +155,7 @@ class HCAImgModel(Model):
         return leaf_x, parent_x 
     """
   
-    def pretrain_leaf_ca( self, seed_args, num_epochs= 5000,lr=1e-3, use_pool=True, batch_size=4):
+    def pretrain_leaf_ca( self, seed_args, num_epochs= 5000,lr=1e-3, batch_size=4):
 
         seed = seed_args['seed']
         repeat_count = self.leaf_replay_buffer.maxlen
@@ -166,7 +166,7 @@ class HCAImgModel(Model):
         history = []
         min_loss = np.inf
         for e in tqdm(range(num_epochs)):
-            loss, tape = self._loss_step_leaf_ca(e, use_pool, batch_size, seed_args)
+            loss, tape = self._loss_step_leaf_ca(e, batch_size, seed_args)
             variables = self.leaf_ca_model.trainable_variables
             grads = tape.gradient(loss, variables)
             grads = [g/(tf.norm(g)+1e-8) for g in grads]
@@ -232,7 +232,6 @@ class HCAImgModel(Model):
         
         return history
 
-  """
 
     def pretrain_parent_ca(self, seed_args, start_epoch=0, lr=1e-3, num_epochs= 5000,\
                                    use_pool=True, batch_size=4,\
@@ -297,16 +296,15 @@ class HCAImgModel(Model):
           self.set_weights(best_model_weights)
                         
       return history
+  """
 
-    def _loss_step_leaf_ca(self, curr_epoch, use_pool, batch_size, seed_args):
+    def _loss_step_leaf_ca(self, curr_epoch, batch_size, seed_args):
 
-        if use_pool:
-            x = self.leaf_replay_buffer.sample_batch(batch_size)
-            if curr_epoch % seed_args['reseed_freq'] == 0:
-              x[0] = seed_args['seed'][0]
-              #x[:1]= self.leaf_ca_model.make_seed(self.leaf_img_target_size)
-        else:
-            x = self.leaf_ca_model.make_seed(self.leaf_img_target_size)
+        
+        x = self.leaf_replay_buffer.sample_batch(batch_size)
+        if curr_epoch % seed_args['reseed_freq'] == 0:
+          x[0] = seed_args['seed'][0]
+               
 
         if self.leaf_ca_model.n_schannels:
           x,s = tf.split(x,[self.leaf_ca_model.n_channels,-1], axis=-1)
@@ -318,76 +316,36 @@ class HCAImgModel(Model):
             #overflow loss forces the model to output values within -1.0 and 1.0
             overflow_loss = tf.reduce_sum(tf.abs(x - tf.clip_by_value(x, -1.0, 1.0)))
             loss = self.leaf_ca_loss(self.leaf_ca_target_img, tf.identity(x)) # + overflow_loss*1e2
-        if use_pool :
-          self.leaf_replay_buffer.add(x.numpy())
+        
+        self.leaf_replay_buffer.add(x.numpy())
 
         return loss, t
 
-    def _loss_step_parent_ca(self, curr_epoch, batch_no,  use_pool, batch_size, seed_args ):
-
+   
+    def _loss_step_hca(self, curr_epoch, batch_size, loss_weightage, seed_args, update_rate):
         
-        x = self.parent_replay_buffer.sample_batch(batch_size)
-        if seed_args['reseed_freq'] != 0 and \
-            curr_epoch % seed_args['reseed_freq'] == 0:
-
-          k = np.random.randint(0, len(seed_args['seed']))
-          x[0] = seed_args['seed'][k]
-          
         
-        step_n = np.random.randint(self.parent_ca_min_steps, self.parent_ca_max_steps)
-        with tf.GradientTape() as t:
-            x = self.parent_ca_model.step(x, None , n_steps=step_n, update_rate=1.0,training_type='parent')
-            #overflow loss forces the model to output values within -1.0 and 1.0
-            overflow_loss = tf.reduce_sum(tf.abs(x - tf.clip_by_value(x, -1.0, 1.0)))
-            loss = self.parent_ca_loss( self.parent_ca_target_img, x, is_image=True ) # + overflow_loss*1e2
+        leaf_x = self.leaf_replay_buffer.sample_batch(batch_size)
+        if seed_args['reseed_freq'] !=0 and curr_epoch % seed_args['reseed_freq'] == 0:
+          leaf_x[0]= seed_args['seed'][0]
        
-        self.parent_replay_buffer.add(x.numpy())
-
-        return loss, t
-
-    def _loss_step_hca(self, curr_epoch, use_pool, batch_size, loss_weightage, seed_args, step_reg, update_rate):
-        
-        if use_pool:
-            leaf_x = self.leaf_replay_buffer.sample_batch(batch_size)
-            if seed_args['reseed_freq'] !=0 and curr_epoch % seed_args['reseed_freq'] == 0:
-              leaf_x[0]= seed_args['seed'][0]
-        else:
-            leaf_x = self.leaf_ca_model.make_seed(self.leaf_img_target_size)
 
         step_n = np.random.randint(self.hca_min_steps, self.hca_max_steps)
-        
-        sum_reg = 0
-        cnt = 0
        
         with tf.GradientTape() as t:
             leaf_x, parent_x = self(leaf_x, None, update_rate=update_rate )
 
-            #prev_r = tf.reduce_sum(leaf_x[..., 0])
-            #prev_g = tf.reduce_sum(leaf_x[..., 1])
-            #prev_b = tf.reduce_sum(leaf_x[..., 2])
-
             for i in tf.range(step_n-1):
                 leaf_x, parent_x = self(leaf_x, parent_x, update_rate=update_rate)
-                #new_r = tf.reduce_sum(leaf_x[..., 0])
-                #new_g = tf.reduce_sum(leaf_x[..., 1])
-                #new_b = tf.reduce_sum(leaf_x[..., 2])
-
-                if step_reg !=0 and i% step_reg == 0 and i != step_n-2:
-                  #sum_reg += (new_r-prev_r)**2 + (new_g-prev_g)**2 + (new_b-prev_b)**2
-                  sum_reg += self.leaf_ca_loss(self.parent_ca_target_img, leaf_x )
-                  cnt += 1
-                #prev_r = new_r
-                #prev_g = new_g
-                #prev_b = new_b
-            sum_reg /= cnt      
-            print("sum_reg:", sum_reg.numpy())
+              
+  
             loss_parent = self.parent_ca_loss(self.parent_ca_target_img, leaf_x ) if loss_weightage[0] else tf.constant(0.0, dtype=tf.float32)
-            loss_leaf = sum_reg if loss_weightage[1] and step_reg > 0  else tf.constant(0.0, dtype=tf.float32)
+            loss_leaf = self.leaf_ca_loss(self.parent_ca_target_img, leaf_x ) if loss_weightage[1]  else tf.constant(0.0, dtype=tf.float32)
             total_loss = loss_parent + loss_leaf
             loss_hca = loss_parent* (loss_leaf/total_loss) + loss_leaf* (loss_parent/total_loss)
 
-        if use_pool :
-          self.leaf_replay_buffer.add(leaf_x.numpy())
+        
+        self.leaf_replay_buffer.add(leaf_x.numpy())
 
         return loss_leaf, loss_parent, loss_hca, t
 
@@ -401,9 +359,9 @@ class HCAImgModel(Model):
       return out
 
 
-    def train_hca( self, seed_args, num_epochs= 2000, lr=1e-3, use_pool=True,\
+    def train_hca( self, seed_args, num_epochs= 2000, lr=1e-3, \
                       batch_size=4, es_patience_cfg=500, lr_patience_cfg=250,\
-                        loss_weightage=[10,1], step_reg=1, update_rate=0.5 ):
+                        loss_weightage=[10,1], update_rate=0.5 ):
 
         seed = seed_args['seed']
         repeat_count = self.leaf_replay_buffer.maxlen
@@ -419,7 +377,7 @@ class HCAImgModel(Model):
         lr_patience = lr_patience_cfg
         min_loss = np.inf
         for e in tqdm(tf.range(num_epochs)):
-            loss_leaf, loss_parent, loss_hca, hca_tape = self._loss_step_hca( e, use_pool, batch_size, loss_weightage , seed_args, step_reg, update_rate)
+            loss_leaf, loss_parent, loss_hca, hca_tape = self._loss_step_hca( e, batch_size, loss_weightage , seed_args,  update_rate)
             hca_history.append(loss_hca.numpy())
             parent_ca_history.append(loss_parent.numpy())
             leaf_ca_history.append(loss_leaf.numpy())
@@ -427,13 +385,7 @@ class HCAImgModel(Model):
             gradients_hca = hca_tape.gradient(loss_hca,  training_vars, unconnected_gradients=tf.UnconnectedGradients.ZERO ) 
             grads = [g/(tf.norm(g)+1e-8) for g in gradients_hca]
             optimizer_hca.apply_gradients(zip(grads, training_vars))
-            """
-            if seed_args['leaf_training_freq']!=0 and  e % seed_args['leaf_training_freq'] == 0:
-              loss_leaf_ca,leaf_ca_tape = self._loss_step_leaf_ca( e,use_pool, batch_size )
-              gradients_leaf_ca = leaf_ca_tape.gradient(loss_leaf_ca, self.leaf_ca_model.trainable_variables)
-              grads = [g/(tf.norm(g)+1e-8) for g in gradients_leaf_ca]
-              optimizer_leaf_ca.apply_gradients(zip(grads, self.leaf_ca_model.trainable_variables))
-            """
+           
             if loss_hca + 1e-6 < min_loss:
               min_loss = loss_hca
               print("min_loss:",min_loss.numpy() )

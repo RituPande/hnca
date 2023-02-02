@@ -122,8 +122,7 @@ class ImgCA(Model):
     def step( self, x_initial=None, s=None, n_steps = 50, update_rate=0.5, training_type='leaf' ):
 
         x = x_initial
-        if x is None:
-            x = self.make_seed(self.target_size, n=1)
+       
         # In the first step the feature x and signal s are sent as independent inputs
         x  = self(x, s, update_rate,training_type )
         for _ in tf.range(n_steps-1):
@@ -134,15 +133,5 @@ class ImgCA(Model):
     
         return x
     
-    def make_seed(self, size, n=1):
-        x = np.ones((n, size, size, self.n_channels), np.float32)
-        if self.n_schannels > 0:
-            s = np.zeros((n, size, size, self.n_schannels), np.float32)  
-            ca_seed = np.concatenate([x,s], axis=-1)
-        else :
-            ca_seed = x
-
-        return ca_seed
-
-    
+      
   
