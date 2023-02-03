@@ -313,9 +313,7 @@ class HCAImgModel(Model):
         step_n = np.random.randint(self.leaf_ca_min_steps, self.leaf_ca_max_steps)
         with tf.GradientTape() as t:
             x = self.leaf_ca_model.step(x, s, n_steps=step_n, training_type='leaf')
-            #overflow loss forces the model to output values within -1.0 and 1.0
-            overflow_loss = tf.reduce_sum(tf.abs(x - tf.clip_by_value(x, -1.0, 1.0)))
-            loss = self.leaf_ca_loss(self.leaf_ca_target_img, tf.identity(x)) # + overflow_loss*1e2
+            loss = self.leaf_ca_loss(self.leaf_ca_target_img, tf.identity(x)) 
         
         self.leaf_replay_buffer.add(x.numpy())
 
@@ -341,8 +339,7 @@ class HCAImgModel(Model):
   
             loss_parent = self.parent_ca_loss(self.parent_ca_target_img, leaf_x ) if loss_weightage[0] else tf.constant(0.0, dtype=tf.float32)
             loss_leaf = self.leaf_ca_loss(self.parent_ca_target_img, leaf_x ) if loss_weightage[1]  else tf.constant(0.0, dtype=tf.float32)
-            total_loss = loss_parent + loss_leaf
-            loss_hca = loss_parent* (loss_leaf/total_loss) + loss_leaf* (loss_parent/total_loss)
+            loss_hca = loss_parent*loss_weightage[0]  + loss_leaf* loss_weightage[1]
 
         
         self.leaf_replay_buffer.add(leaf_x.numpy())
