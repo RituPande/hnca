@@ -187,7 +187,31 @@ def fillStars(img, circles, colors):
     return img
        
 
-def create_pattern_image(image_width = 128 ,image_height= 128, num_circles=10, num_colors = 2, min_radius=5, max_radius=10, bg=52, save_img=True, target_points=None, colors=None):
+def create_hollow_circle_image(image_width = 128 ,image_height= 128, num_circles=10, num_colors = 2, min_radius=5, max_radius=10, bg=52, save_img=True, target_points=None, colors=None):
+  img = np.full((image_height,image_width, 3),bg , dtype=np.uint8 )
+  noise = np.random.randint(0,5,size=(image_height,image_width, 3), dtype=np.uint8)  
+
+  circles = create_random_circles(image_width, image_height, num_circles, min_radius, max_radius)
+  if colors is None:
+    colors = get_unique_colors(num_colors)
+  img = fillCircles(img, circles, colors, None)
+
+  small_circles = []
+
+  for c in circles:
+    x,y,r = c
+    c = (x,y,r-3)
+    small_circles.append(c)
+
+  img = fillCircles(img, small_circles, [(bg,bg,bg)], None)
+  img += noise
+ 
+  
+  if save_img:
+    cv2.imwrite('../img/hca_target_img.png',img)
+    
+
+def create_flower_pattern_image(image_width = 128 ,image_height= 128, num_circles=10, num_colors = 2, min_radius=5, max_radius=10, bg=52, save_img=True, target_points=None, colors=None):
    img = np.full((image_height,image_width, 3),bg , dtype=np.uint8 )
    noise = np.random.randint(0,5,size=(image_height,image_width, 3), dtype=np.uint8)  
 
@@ -334,10 +358,13 @@ if __name__ == '__main__':
         create_star_image(image_width,image_height,num_circles,num_colors,min_radius,max_radius,background, save_img, None, colors)
     elif target == 5:
         colors = [(9,230,199), ( 250, 3, 185)]
-        create_pattern_image(image_width,image_height,num_circles,num_colors,min_radius,max_radius,background, save_img, None, colors)
+        create_flower_pattern_image(image_width,image_height,num_circles,num_colors,min_radius,max_radius,background, save_img, None, colors)
+    elif target == 6:
+        colors = [(9,230,199), ( 250, 3, 185)]
+        create_hollow_circle_image(image_width,image_height,num_circles,num_colors,min_radius,max_radius,background, save_img, None, colors)
     else:
         print("No target input")
-    if target != 0 and target < 4:
+    if target > 0 and target < 4:
       colors = [(9,230,199), ( 250, 3, 185)]
       create_image(image_width,image_height,num_circles,num_colors,min_radius,max_radius,background, save_img, points, colors)
       if args.pool:
