@@ -114,7 +114,7 @@ class HCAImgModel(Model):
       leaf_x,parent_x = self( leaf_x, None,leaf_ca_sig_threshold=1 )
       leaf_x,parent_x = self( leaf_x, parent_x)
 
-    def call( self, leaf_x, parent_x, leaf_ca_sig_threshold=50, update_rate=0.5):
+    def call( self, leaf_x, parent_x, leaf_ca_sig_threshold=100, update_rate=0.5):
         # create leaf_x and parent_x for the first time
         if parent_x is None:
           step_n = leaf_ca_sig_threshold 
