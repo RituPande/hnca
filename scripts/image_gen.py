@@ -390,7 +390,8 @@ if __name__ == '__main__':
     else:
         print("No target input")
     if target > 0 and target < 4:
-      colors = [(9,230,199), ( 250, 3, 185)]
+      #colors = [(9,230,199), ( 250, 3, 185)]
+      colors = [(221,145,95), ( 120, 200, 80)]
       create_image(image_width,image_height,num_circles,num_colors,min_radius,max_radius,background, save_img, points, colors)
       if args.pool:
         create_pooled_img(args.pool)
