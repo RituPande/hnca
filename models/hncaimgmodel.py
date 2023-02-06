@@ -154,14 +154,14 @@ class HCAImgModel(Model):
 
         return leaf_x, parent_x 
     """
-    """
-    def pretrain_leaf_ca( self, seed_args, num_epochs= 5000,lr=1e-3, batch_size=4):
+   
+    def pretrain_leaf_ca_sched( self, seed_args, num_epochs= 5000,lr=1e-3, batch_size=4):
 
         seed = seed_args['seed']
         repeat_count = self.leaf_replay_buffer.maxlen
         repeated_seeds = np.repeat(seed, repeat_count, axis=0)
         self.leaf_replay_buffer.add(repeated_seeds)
-        lr_sched = tf.keras.optimizers.schedules.PiecewiseConstantDecay([2000,2000], [lr, lr*0.3, lr*0.3*0.3])
+        lr_sched = tf.keras.optimizers.schedules.PiecewiseConstantDecay([2000,3000], [lr, lr*0.3, lr*0.3*0.3])
         optimizer = tf.keras.optimizers.Adam(lr_sched, epsilon=1e-08)
         history = []
         min_loss = np.inf
@@ -181,7 +181,7 @@ class HCAImgModel(Model):
         
         self.leaf_ca_model.set_weights(best_model_weights)
         return history
-    """
+   
    
     def pretrain_leaf_ca( self, seed_args, num_epochs= 5000, lr=1e-3, batch_size=4, num_batches_per_epoch=1, es_patience_cfg=1500, lr_patience_cfg=1000):
 
