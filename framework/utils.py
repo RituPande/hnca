@@ -8,6 +8,8 @@ from keras.layers import AveragePooling2D
 
 
 def save_image( img, img_path ):
+  img = np.uint8(img.clip(0, 1)*255)
+  img = np.squeeze(img)
   pil_img = PIL.Image.fromarray(img, "RGB")
   pil_img.save(img_path)
 
