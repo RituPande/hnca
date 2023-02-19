@@ -7,6 +7,10 @@ import PIL
 from keras.layers import AveragePooling2D
 
 
+def save_image( img, img_path ):
+  pil_img = PIL.Image.fromarray(img, "RGB")
+  pil_img.save(img_path)
+
 def load_image( image_path, max_size = 128):  
   img =  PIL.Image.open(image_path)
   img.thumbnail((max_size, max_size), PIL.Image.ANTIALIAS)
