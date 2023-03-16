@@ -85,7 +85,7 @@ class HCAImgModel(Model):
 
         if leaf_ca_loss_type is None:
           self.leaf_ca_loss= None
-        elif leaf_ca_loss_type in ['gram','style_ot']:
+        elif leaf_ca_loss_type == 'style_ot':
             self.leaf_ca_loss = StyleLoss( np.copy(self.leaf_ca_target_img), leaf_ca_loss_type )
         elif leaf_ca_loss_type == 'mse':
             self.leaf_ca_loss = MSELoss()
@@ -96,7 +96,7 @@ class HCAImgModel(Model):
         
         if parent_ca_loss_type is None:
             self.parent_ca_loss = None 
-        elif parent_ca_loss_type in ['gram','style_ot']:
+        elif parent_ca_loss_type == 'style_ot':
             self.parent_ca_loss = StyleLoss( np.copy(self.parent_ca_target_img), parent_ca_loss_type )
         elif parent_ca_loss_type == 'mse':
             self.parent_ca_loss = MSELoss()

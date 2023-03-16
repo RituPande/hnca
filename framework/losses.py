@@ -19,25 +19,19 @@ class StyleLoss:
         #target parameter is not used. It is present only for consistency of signature with mse loss
         img = to_rgb(x)*255.0
         loss = np.inf
-        if self.loss_type in ['gram','style_ot']:
+       
+        if self.loss_type=='style_ot':   
             img_style = self._calc_styles_vgg(img)
-            if self.loss_type=='gram':
-                loss = [self._gram_loss(y_true,y_pred) for y_true, y_pred in zip(self.target_style, img_style)]
-            elif self.loss_type=='style_ot':   
-                loss = [self._ot_loss(y_true,y_pred) for y_true, y_pred in zip(self.target_style, img_style)]
-                                
-            else:
-                print("Unsupported loss type")
+            loss = [self._ot_loss(y_true,y_pred) for y_true, y_pred in zip(self.target_style, img_style)]
+        else:
+            print("Unsupported loss type")
         return tf.reduce_sum(loss)
 
     def _calc_styles_vgg(self, img):
-        #x = preprocess_input(img)
         x = img[..., ::-1] - np.float32([103.939, 116.779, 123.68])
-        #[print(self.vgg16.layers[i].name) for i in self.style_layers]
-      
         b, h, w, c  = x.shape
         features = [tf.reshape(x, (b, h*w, c) )]        
-        #features = []
+       
         for i in range(max(self.style_layers)+1):
             x = self.vgg16.layers[i](x)
             if i in self.style_layers:
@@ -45,17 +39,6 @@ class StyleLoss:
                 features.append(tf.reshape(x, (b, h*w,c) ) )
          
         return features
-
-    def _gram_loss(self, y_true, y_pred):
-        
-        b, size, c = y_true.shape
-        G_true = tf.matmul(tf.transpose(y_true,perm=[0,2,1]),y_true)
-        G_pred = tf.matmul(tf.transpose(y_pred, perm = [0,2,1]),y_pred)
-
-        loss = tf.reduce_mean(tf.square(G_true - G_pred))/(4.0 * (c ** 2) * ( size** 2))
-
-        loss =  tf.cast(loss, dtype=tf.float32)
-        return loss
 
     def _ot_loss(self, y_true, y_pred, n_directions =  32 ):
         
@@ -97,7 +80,6 @@ class OTLoss:
         proj_true = tf.sort(proj_true) # sort on axis = -1
         proj_pred = tf.einsum('bnc,cp->bnp', y_pred, p_vecs)
         proj_pred = tf.sort(proj_pred)
-        #proj_true = self._resize_1d(proj_true, n_pred) # perform linear interpolation
         loss = tf.reduce_mean(tf.square(proj_true - proj_pred )) # loss for each pixel in each direction and take their mean
         loss = tf.cast(loss, dtype=tf.float32 ) # take mean of loss across all directions 
         return loss
