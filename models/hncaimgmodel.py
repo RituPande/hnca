@@ -239,8 +239,8 @@ class HCAImgModel(Model):
       return out
 
 
-    def train_hca( self, seed_args, num_epochs= 5000, lr=1e-3, \
-                      batch_size=4, es_patience_cfg=1500, lr_patience_cfg=1000,\
+    def train_hca( self, seed_args, num_epochs= 15000, lr=1e-3, \
+                      batch_size=4, es_patience_cfg=4000, lr_patience_cfg=3000,\
                         loss_weightage=[1,0], update_rate=0.5 ):
 
         seed = seed_args['seed']
