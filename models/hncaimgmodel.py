@@ -31,8 +31,7 @@ class HCAImgModel(Model):
                           comm_cfg_params,\
                             leaf_img_target_size=128,\
                                 leaf_ca_min_steps=32, leaf_ca_max_steps=96,\
-                                    parent_ca_min_steps=32, parent_ca_max_steps=96,\
-                                        hca_min_steps=32, hca_max_steps=96,\
+                                    hca_min_steps=32, hca_max_steps=96,\
                                             leaf_ca_loss_type='ot', parent_ca_loss_type='mse',\
                                              n_leaf_ca_channels=3, n_leaf_ca_schannels=9,\
                                                 n_parent_ca_channels=12 ):
@@ -69,8 +68,6 @@ class HCAImgModel(Model):
 
         self.leaf_ca_min_steps = leaf_ca_min_steps
         self.leaf_ca_max_steps = leaf_ca_max_steps
-        self.parent_ca_min_steps = parent_ca_min_steps
-        self.parent_ca_max_steps = parent_ca_max_steps
         self.hca_min_steps = hca_min_steps
         self.hca_max_steps = hca_max_steps
         
@@ -132,29 +129,6 @@ class HCAImgModel(Model):
 
         return leaf_x, parent_x 
 
-    """
-    def call(self, leaf_x, parent_x=None ):
-        
-        step_n = np.random.randint(self.leaf_ca_min_steps, self.leaf_ca_max_steps)
-        if parent_x is None:
-            leaf_x, s = tf.split(leaf_x, [self.leaf_ca_model.n_channels, -1], axis=-1)
-            leaf_x = tf.stop_gradient(self.leaf_ca_model.step(leaf_x,s,n_steps=step_n, training_type='hca'))
-            parent_x = self.sensor(leaf_x , None )
-            parent_x = self.parent_ca_model.step(parent_x,s=None,n_steps=1, update_rate=1.0, training_type='hca')
-
-        #Get signal from the parent CA and mix with leaf CA 
-        leaf_channels, leaf_schannels = self.actuator( parent_x, leaf_x )
-                                                      
-        leaf_x = self.leaf_ca_model.step(leaf_channels, s=leaf_schannels, n_steps=1, update_rate=1.0, training_type='hca')
-
-        # Report pooled leaf CA signal back to the 
-        parent_x = self.sensor(leaf_x, None  )
-
-        parent_x = self.parent_ca_model.step(parent_x, s=None, n_steps=1, update_rate=1.0, training_type='hca')
-
-        return leaf_x, parent_x 
-    """
-   
     def pretrain_leaf_ca_sched( self, seed_args, num_epochs= 5000,lr=1e-3, batch_size=4):
 
         seed = seed_args['seed']
@@ -178,8 +152,7 @@ class HCAImgModel(Model):
               print("min_loss:",loss.numpy())
             else:
               print("loss:",loss.numpy())
-        
-       #self.leaf_ca_model.set_weights(best_model_weights)
+              
         return history
    
    
@@ -190,7 +163,6 @@ class HCAImgModel(Model):
         repeated_seeds = np.repeat(seed, repeat_count, axis=0)
         self.leaf_replay_buffer.add(repeated_seeds)
 
-        #lr_sched = tf.keras.optimizers.schedules.PiecewiseConstantDecay([1000,2000], [lr, lr*0.3, lr*0.3*0.3])
         optimizer = tf.keras.optimizers.Adam(learning_rate=lr, epsilon=1e-08)
         history = []
         min_loss = np.inf
@@ -234,72 +206,7 @@ class HCAImgModel(Model):
         
         return history
 
-    """
-    def pretrain_parent_ca(self, seed_args, start_epoch=0, lr=1e-3, num_epochs= 5000,\
-                                   use_pool=True, batch_size=4,\
-                                     es_patience_cfg=500, lr_patience_cfg=250,\
-                                      num_batches_per_epoch=1, min_loss=np.inf ):
-      
-      optimizer = tf.keras.optimizers.Adam(learning_rate=lr, epsilon=1e-08, )
-      history = []
-      seed = None
-      
-      seeds = seed_args['seed']
-      repeat_count = self.parent_replay_buffer.maxlen//len(seeds)
-      repeated_seeds = np.repeat(seeds, repeat_count, axis=0)
-      self.parent_replay_buffer.add(repeated_seeds)
-      add_count = self.parent_replay_buffer.maxlen % len(seeds)
-      if add_count: self.parent_replay_buffer.add(seeds[-add_count:,...])
-                
-      self.parent_replay_buffer.add(seeds)
-          
-      es_patience = es_patience_cfg
-      lr_patience = lr_patience_cfg
-      best_model_weights = self.get_weights()
-      
-      for e in tqdm(tf.range(start=start_epoch, limit=num_epochs)):
-        batch_loss = 0
-        for b in tf.range(num_batches_per_epoch):
-          loss, tape = self._loss_step_parent_ca(e, b, use_pool, batch_size, seed_args)
-          batch_loss += loss
-          variables = self.parent_ca_model.trainable_variables
-          grads = tape.gradient(loss, variables)
-          grads = [g/(tf.norm(g)+1e-8) for g in grads]
-          optimizer.apply_gradients(zip(grads, variables))
-          
-        batch_loss /= num_batches_per_epoch 
-        history.append(batch_loss.numpy())
-
-        if batch_loss + 1e-6 < min_loss:
-          min_loss = batch_loss
-          print("min_loss:",min_loss.numpy() )
-          es_patience = es_patience_cfg
-          lr_patience = lr_patience_cfg
-          best_model_weights = self.get_weights()
-          for filename in glob.glob("gdrive/MyDrive/chkpt/parent_ca_wghts*"):os.remove(filename)
-     
-          self.parent_ca_model.save_weights(f"gdrive/MyDrive/chkpt/parent_ca_wghts_{e}_{optimizer.lr.numpy():0.2e}_{min_loss.numpy():0.2f}_chkpt.h5" )
-          #best_opt_weights = optimizer.get_weights()
-        else:
-          es_patience -= 1
-          lr_patience -= 1
-          print("loss:",batch_loss.numpy()," es_patience:",es_patience," lr_patience:",lr_patience )
-          if es_patience == 0:
-            self.set_weights(best_model_weights)
-            break
-            
-        if lr_patience == 0:
-          #optimizer = self._reload_optimizer(optimizer,\
-          #                       self.parent_ca_model.trainable_variables,\
-          #                          best_opt_weights)
-          K.set_value(optimizer.lr, optimizer.lr * 0.1)
-          print("New lr:",optimizer.lr)
-          lr_patience = lr_patience_cfg
-          self.set_weights(best_model_weights)
-                        
-      return history
-  """
-
+    
     def _loss_step_leaf_ca(self, curr_epoch, batch_size, seed_args):
 
         
@@ -358,9 +265,9 @@ class HCAImgModel(Model):
       return out
 
 
-    def train_hca( self, seed_args, num_epochs= 2000, lr=1e-3, \
-                      batch_size=4, es_patience_cfg=500, lr_patience_cfg=250,\
-                        loss_weightage=[10,1], update_rate=0.5 ):
+    def train_hca( self, seed_args, num_epochs= 5000, lr=1e-3, \
+                      batch_size=4, es_patience_cfg=1500, lr_patience_cfg=1000,\
+                        loss_weightage=[1,0], update_rate=0.5 ):
 
         seed = seed_args['seed']
         repeat_count = self.leaf_replay_buffer.maxlen
