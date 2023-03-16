@@ -11,7 +11,8 @@
             "module": "hnca",
             "justMyCode": true,
             "env":{
-                "PYTHONPATH": "${workspaceFolder}/.."
+                "PYTHONPATH": "$PYTHONPATH;${workspaceFolder}/..;${workspaceFolder}",
+                "PATH": "$PATH;${workspaceFolder}/..;${workspaceFolder}"
             }
         }
     ]

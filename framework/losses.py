@@ -15,15 +15,15 @@ class StyleLoss:
         self.loss_type = loss_type
        
 
-    def __call__(self, x  ):
-        #img = tf.clip_by_value(to_rgb(x)*255.0, 0, 255.0)
+    def __call__(self, target, x  ):
+        #target parameter is not used. It is present only for consistency of signature with mse loss
         img = to_rgb(x)*255.0
         loss = np.inf
-        if self.loss_type in ['gram','ot']:
+        if self.loss_type in ['gram','style_ot']:
             img_style = self._calc_styles_vgg(img)
             if self.loss_type=='gram':
                 loss = [self._gram_loss(y_true,y_pred) for y_true, y_pred in zip(self.target_style, img_style)]
-            elif self.loss_type=='ot':   
+            elif self.loss_type=='style_ot':   
                 loss = [self._ot_loss(y_true,y_pred) for y_true, y_pred in zip(self.target_style, img_style)]
                                 
             else:
@@ -66,14 +66,14 @@ class StyleLoss:
         proj_true = tf.sort(proj_true) # sort on axis = -1
         proj_pred = tf.einsum('bnc,cp->bpn', y_pred, p_vecs)
         proj_pred = tf.sort(proj_pred)
-        loss = tf.reduce_sum(tf.square(proj_true - proj_pred )) # loss for each pixel in each direction and take their mean
+        loss = tf.reduce_mean(tf.square(proj_true - proj_pred )) # loss for each pixel in each direction and take their mean
         loss = tf.cast(loss, dtype=tf.float32 ) # take mean of loss across all directions 
         return loss
 
 
 class MSELoss:
             
-    def __call__( self, target, x, is_image=False ):
+    def __call__( self, target, x, is_image=True ):
         pred = to_rgb(x)*255.0 if is_image else x
         loss =  tf.reduce_mean(tf.square(target - pred))
         return loss
@@ -83,15 +83,21 @@ class OTLoss:
     def __init__(self, n_directions=32):
         self.n_directions =  n_directions
     
-    def __call__( self, y_true, y_pred ):
-        n_true, n_features = y_true.shape
-        n_pred, _ = y_pred.shape
-        p_vecs,_ = tf.linalg.normalize(tf.random.normal( shape=(n_features, self.n_directions ) ), axis = 0 )  # create  n_directions unit vectors with c dimensions
-        proj_true = tf.einsum('nf,fp->np', y_true, p_vecs)
+    def __call__( self, y_true, y_pred, is_image=True ):
+        y_pred = to_rgb(y_pred)*255.0 if is_image else y_pred
+
+        b, h, w , c = y_true.shape
+        y_true = tf.reshape( y_true, (b, h*w, c) )
+
+        b, h, w , c = y_pred.shape
+        y_pred = tf.reshape( y_pred, (b, h*w, c) )
+        
+        p_vecs,_ = tf.linalg.normalize(tf.random.normal( shape=(c, self.n_directions ) ), axis = 0 )  # create  n_directions unit vectors with c dimensions
+        proj_true = tf.einsum('bnc,cp->bnp', y_true, p_vecs)
         proj_true = tf.sort(proj_true) # sort on axis = -1
-        proj_pred = tf.einsum('nf,fp->np', y_pred, p_vecs)
+        proj_pred = tf.einsum('bnc,cp->bnp', y_pred, p_vecs)
         proj_pred = tf.sort(proj_pred)
-        proj_true = self._resize_1d(proj_true, n_pred) # perform linear interpolation
+        #proj_true = self._resize_1d(proj_true, n_pred) # perform linear interpolation
         loss = tf.reduce_mean(tf.square(proj_true - proj_pred )) # loss for each pixel in each direction and take their mean
         loss = tf.cast(loss, dtype=tf.float32 ) # take mean of loss across all directions 
         return loss
