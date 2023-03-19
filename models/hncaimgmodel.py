@@ -1,6 +1,6 @@
 from hnca.framework.ca import ImgCA
 from hnca.framework.losses import StyleLoss, MSELoss, OTLoss
-from hnca.framework.utils import load_image, show_image, plot_loss, create_parent_seed 
+from hnca.framework.utils import load_image, show_image, plot_loss
 from hnca.framework.types import ReplayBuffer
 from hnca.framework.comm import Sensor, Actuator
 import tensorflow as tf
