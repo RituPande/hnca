@@ -12,7 +12,7 @@ Ritu Pande, Daniele Grattarola
 
 ## Experiments
 
-There are two experiments performed to show the capabilities of H-NCA, namely, <b> <i> Cell Differentiation </i> </b>  and  <b> <i> Metamorphosis </i> </b>. To reproduce the results of the paper, open **hnca.ipynb** from the repository in Google Colab and load the model weights. Then evolve the model using those weights. You can also train the models afresh following the instructions in the notebook.
+There are two experiments performed to show the capabilities of H-NCA, namely, <b> <i> Cell Differentiation </i> </b>  and  <b> <i> Metamorphosis </i> </b>.
 
 ## Results
 ### Cell Differentiation
@@ -23,3 +23,6 @@ There are two experiments performed to show the capabilities of H-NCA, namely, <
 ![m1](https://user-images.githubusercontent.com/20730487/229893990-855fc48e-a03f-469a-aad3-82528c422261.gif)
 ![m2](https://user-images.githubusercontent.com/20730487/229894015-8d5dc558-ece8-47f6-b533-f1ab8c7acc90.gif)
 ![m3](https://user-images.githubusercontent.com/20730487/229894038-7b711606-7d95-4b39-ab84-0b811a201e13.gif)
+
+## Results Reproduction
+To reproduce the results of the paper, open **hnca.ipynb** from the repository in Google Colab and load the model weights. Then evolve the model using those weights. You can also train the models afresh following the instructions in the notebook.
