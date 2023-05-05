@@ -24,5 +24,5 @@ There are two experiments performed to show the capabilities of H-NCA, namely, <
 ![m2](https://user-images.githubusercontent.com/20730487/229894015-8d5dc558-ece8-47f6-b533-f1ab8c7acc90.gif)
 ![m3](https://user-images.githubusercontent.com/20730487/229894038-7b711606-7d95-4b39-ab84-0b811a201e13.gif)
 
-## Results Reproduction
+## Reproduction of Results
 To reproduce the results of the paper, open **hnca.ipynb** from the repository in Google Colab and load the model weights. Then evolve the model using those weights. You can also train the models afresh following the instructions in the notebook.
